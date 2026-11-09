@@ -1,8 +1,5 @@
 <title>클로드랑 문자</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#eef1f8">
 <style>
 /* Layout: one-screen messaging app — frosted header, scrolling thread over a soft wallpaper, frosted composer */
 :root{
@@ -10,7 +7,7 @@
   --glass:rgba(255,255,255,.55); --glass-strong:rgba(255,255,255,.72); --glass-line:rgba(255,255,255,.75);
   --ink:#111318; --ink-2:#6b7080; --ink-3:#9aa0ae;
   --me-1:#3b9bff; --me-2:#0a6cff; --me-ink:#fff;
-  --them:rgba(255,255,255,.78); --them-ink:#111318;
+  --them:rgba(255,255,255,.86); --them-ink:#111318;
   --accent:#0a6cff; --shadow:0 1px 2px rgba(20,30,60,.06),0 6px 20px rgba(20,30,60,.06);
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
 }
@@ -19,7 +16,7 @@
   --glass:rgba(28,30,40,.55); --glass-strong:rgba(30,32,44,.72); --glass-line:rgba(255,255,255,.08);
   --ink:#f3f4f8; --ink-2:#a2a7b6; --ink-3:#6f7484;
   --me-1:#3b9bff; --me-2:#0a6cff; --me-ink:#fff;
-  --them:rgba(58,60,74,.72); --them-ink:#f3f4f8;
+  --them:rgba(52,54,68,.9); --them-ink:#f3f4f8;
   --accent:#4aa3ff; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
   color-scheme:dark;
 }}
@@ -28,22 +25,22 @@
   --glass:rgba(28,30,40,.55); --glass-strong:rgba(30,32,44,.72); --glass-line:rgba(255,255,255,.08);
   --ink:#f3f4f8; --ink-2:#a2a7b6; --ink-3:#6f7484;
   --me-1:#3b9bff; --me-2:#0a6cff; --me-ink:#fff;
-  --them:rgba(58,60,74,.72); --them-ink:#f3f4f8;
+  --them:rgba(52,54,68,.9); --them-ink:#f3f4f8;
   --accent:#4aa3ff; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
   color-scheme:dark;
 }
+[hidden]{display:none!important}
 html,body{height:100%}
 body{
   background:var(--wall-base); color:var(--ink); font-family:var(--font);
   -webkit-font-smoothing:antialiased; overflow:hidden; overscroll-behavior:none;
 }
 body::after{ /* wallpaper */
-  content:""; position:fixed; inset:-20%; z-index:0; pointer-events:none;
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
   background:
     radial-gradient(40% 35% at 15% 20%,var(--wall-1),transparent 70%),
     radial-gradient(45% 40% at 90% 35%,var(--wall-2),transparent 70%),
     radial-gradient(50% 40% at 40% 95%,var(--wall-3),transparent 70%);
-  filter:blur(20px);
 }
 .app{position:relative; z-index:1; height:100%; display:flex; flex-direction:column; max-width:640px; margin:0 auto}
 
@@ -72,24 +69,26 @@ body::after{ /* wallpaper */
 .iconbtn:focus-visible,.send:focus-visible,.chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 
 /* thread */
+button{touch-action:manipulation; -webkit-tap-highlight-color:transparent}
 .thread{
-  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
   padding-block:14px 10px; padding-left:max(12px,env(safe-area-inset-left,0px)); padding-right:max(12px,env(safe-area-inset-right,0px));
   display:flex; flex-direction:column; gap:2px;
 }
 .stamp{align-self:center; font-size:11px; color:var(--ink-2); margin:12px 0 8px; font-variant-numeric:tabular-nums}
 .stamp b{font-weight:600}
-.row{display:flex; max-width:100%}
+.row{display:flex; max-width:100%; contain:layout paint}
+.row.new .bubble{animation:pop .26s cubic-bezier(.2,.9,.3,1.15) both}
+.row.me .bubble{transform-origin:bottom right}
 .row.me{justify-content:flex-end}
 .bubble{
   max-width:76%; padding:8px 13px 9px; font-size:16px; line-height:1.36; border-radius:19px;
-  white-space:pre-wrap; overflow-wrap:anywhere; word-break:keep-all; position:relative;
-  animation:pop .28s cubic-bezier(.2,.9,.3,1.2) both;
+  white-space:pre-wrap; overflow-wrap:anywhere; word-break:keep-all;
+  transform-origin:bottom left;
 }
 .me .bubble{background:linear-gradient(180deg,var(--me-1),var(--me-2)); color:var(--me-ink)}
 .them .bubble{
   background:var(--them); color:var(--them-ink); box-shadow:var(--shadow);
-  backdrop-filter:blur(16px) saturate(160%); -webkit-backdrop-filter:blur(16px) saturate(160%);
   border:.5px solid var(--glass-line);
 }
 .row.tail{margin-bottom:8px}
@@ -107,8 +106,7 @@ body::after{ /* wallpaper */
   padding-block:2px 8px; padding-left:max(12px,env(safe-area-inset-left,0px)); padding-right:max(12px,env(safe-area-inset-right,0px))}
 .chips::-webkit-scrollbar{display:none}
 .chip{
-  flex:none; border:.5px solid var(--glass-line); background:var(--glass-strong); color:var(--ink);
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  flex:none; border:.5px solid var(--glass-line); background:var(--them); color:var(--ink);
   border-radius:16px; padding:7px 12px; font:inherit; font-size:14px; cursor:pointer; box-shadow:var(--shadow);
 }
 .chip:active{transform:scale(.97)}
@@ -127,6 +125,7 @@ body::after{ /* wallpaper */
 .field textarea{
   flex:1; min-width:0; border:0; outline:0; background:transparent; color:var(--ink); resize:none;
   font:inherit; font-size:16px; line-height:1.35; padding:6px 0; max-height:120px;
+  field-sizing:content; min-height:calc(1.35em + 12px);
 }
 .field textarea::placeholder{color:var(--ink-3)}
 .send{
@@ -148,11 +147,15 @@ body::after{ /* wallpaper */
 .sheet p{margin:0; font-size:13px; color:var(--ink-2); text-align:center; line-height:1.5}
 .sheet button{border:0; border-radius:12px; padding:14px; font:inherit; font-size:16px; cursor:pointer; background:var(--them); color:var(--ink)}
 .sheet .danger{color:#ff3b30; font-weight:600}
+.howto{background:var(--them); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:6px}
+.howto h3{margin:0; font-size:13px; font-weight:600}
+.howto ol{margin:0; padding-left:18px; font-size:13px; line-height:1.55; color:var(--ink-2)}
+.howto b{color:var(--ink); font-weight:600}
 
 @keyframes pop{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes blink{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
 @keyframes up{from{transform:translateY(100%)}to{transform:none}}
-@media (prefers-reduced-motion: reduce){.bubble,.sheet,.typing i{animation:none}}
+@media (prefers-reduced-motion: reduce){.row.new .bubble,.sheet,.typing i{animation:none}}
 </style>
 
 <div class="app">
@@ -185,6 +188,13 @@ body::after{ /* wallpaper */
 <div class="sheet-bg" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
     <h2 id="sheetTitle">대화 설정</h2>
+    <div class="howto">
+      <h3>홈 화면에 앱처럼 추가하기</h3>
+      <ol>
+        <li><b>아이폰</b>: Safari로 이 페이지 열기 → 아래 <b>공유</b> 버튼 → <b>홈 화면에 추가</b></li>
+        <li><b>안드로이드</b>: Chrome으로 열기 → 오른쪽 위 <b>⋮</b> → <b>홈 화면에 추가</b></li>
+      </ol>
+    </div>
     <p>대화 내용은 이 기기의 브라우저에만 저장돼요.</p>
     <button class="danger" id="clearBtn">대화 내용 모두 지우기</button>
     <button id="closeSheet">닫기</button>
@@ -194,87 +204,94 @@ body::after{ /* wallpaper */
 <script>
 (() => {
   const KEY = "claude-texting-v1";
-  const thread = document.getElementById("thread");
-  const input = document.getElementById("input");
-  const send = document.getElementById("send");
-  const form = document.getElementById("form");
-  const status = document.getElementById("status");
-  const chips = document.getElementById("chips");
-  const sheet = document.getElementById("sheet");
+  const GAP = 20 * 60 * 1000;
+  const $ = id => document.getElementById(id);
+  const thread = $("thread"), input = $("input"), send = $("send"), form = $("form");
+  const status = $("status"), chips = $("chips"), sheet = $("sheet");
 
   const SUGGEST = ["오늘 점심 뭐 먹지?", "나 오늘 좀 피곤해 ㅠ", "주말에 뭐 할까", "심심해 놀아줘", "자기 전에 볼 영화 추천!"];
-  const GREETING = { role: "assistant", content: "안녕! 나 클로드야 😊\n오늘 하루 어땠어?", t: Date.now() };
+  const greeting = () => ({ role: "assistant", content: "안녕! 나 클로드야 😊\n오늘 하루 어땠어?", t: Date.now() });
 
-  let msgs = [];
-  let busy = false;
-  let sample = null;
-  let sampleReady = false;
-  let sampleBlocked = false;
+  let msgs = [], busy = false, sample = null, sampleReady = false;
+  let lastRow = null, lastMsg = null;
 
-  // ---- storage (per-device convenience) ----
+  // ---------- storage ----------
+  let saveTimer = 0;
   function load(){ try{ const v = JSON.parse(localStorage.getItem(KEY) || "null"); if(Array.isArray(v) && v.length) return v; }catch(e){} return null; }
-  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(msgs.slice(-200))); }catch(e){} }
+  function save(){ clearTimeout(saveTimer); saveTimer = setTimeout(() => { try{ localStorage.setItem(KEY, JSON.stringify(msgs.slice(-200))); }catch(e){} }, 300); }
 
-  // ---- time formatting ----
+  // ---------- DOM pieces that persist ----------
+  const typing = document.createElement("div");
+  typing.className = "row them tail typing new";
+  typing.innerHTML = '<div class="bubble" aria-label="입력 중"><i></i><i></i><i></i></div>';
+  const receipt = document.createElement("div");
+  receipt.className = "receipt"; receipt.textContent = "전송됨";
+
   function stampText(t){
     const d = new Date(t), now = new Date();
     const hm = d.toLocaleTimeString("ko-KR",{hour:"numeric",minute:"2-digit"});
-    const sameDay = d.toDateString() === now.toDateString();
     const y = new Date(now); y.setDate(now.getDate()-1);
-    if(sameDay) return `<b>오늘</b> ${hm}`;
+    if(d.toDateString() === now.toDateString()) return `<b>오늘</b> ${hm}`;
     if(d.toDateString() === y.toDateString()) return `<b>어제</b> ${hm}`;
     return `<b>${d.toLocaleDateString("ko-KR",{month:"long",day:"numeric",weekday:"short"})}</b> ${hm}`;
   }
 
-  // ---- render ----
-  function render(){
-    thread.textContent = "";
-    let lastT = 0;
-    msgs.forEach((m, i) => {
-      if(!lastT || m.t - lastT > 20*60*1000){
-        const s = document.createElement("div"); s.className = "stamp"; s.innerHTML = stampText(m.t); thread.appendChild(s);
-      }
-      lastT = m.t;
-      const next = msgs[i+1];
-      const tail = !next || next.role !== m.role || next.t - m.t > 20*60*1000;
-      thread.appendChild(bubble(m, tail, false));
-    });
-    const lastMe = [...msgs].reverse().find(m => m.role === "user");
-    if(lastMe && msgs[msgs.length-1] === lastMe && !busy){
-      const r = document.createElement("div"); r.className = "receipt"; r.textContent = "전송됨"; thread.appendChild(r);
+  function nearBottom(){ return thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120; }
+  let scrollQueued = false;
+  function scrollDown(force){
+    if(!force && !nearBottom()) return;
+    if(scrollQueued) return; scrollQueued = true;
+    requestAnimationFrame(() => { scrollQueued = false; thread.scrollTop = thread.scrollHeight; });
+  }
+
+  // append one message without touching the rest of the thread
+  function append(m, animate){
+    receipt.remove(); typing.remove();
+    const newBlock = !lastMsg || m.t - lastMsg.t > GAP;
+    if(newBlock){
+      const s = document.createElement("div"); s.className = "stamp"; s.innerHTML = stampText(m.t);
+      thread.appendChild(s);
+    } else if(lastRow && lastMsg.role === m.role){
+      lastRow.classList.remove("tail");
     }
-    if(busy){ thread.appendChild(typingRow()); }
-    renderChips();
-    scrollDown();
-  }
-  function bubble(m, tail, animate){
     const row = document.createElement("div");
-    row.className = "row " + (m.role === "user" ? "me" : "them") + (tail ? " tail" : "");
+    row.className = "row " + (m.role === "user" ? "me" : "them") + " tail" + (animate ? " new" : "");
     const b = document.createElement("div"); b.className = "bubble"; b.textContent = m.content;
-    if(!animate) b.style.animation = "none";
-    row.appendChild(b); return row;
+    row.appendChild(b); thread.appendChild(row);
+    lastRow = row; lastMsg = m;
+    if(busy) thread.appendChild(typing);
+    else if(m.role === "user") thread.appendChild(receipt);
   }
-  function typingRow(){
-    const row = document.createElement("div"); row.className = "row them tail typing"; row.id = "typing";
-    row.innerHTML = '<div class="bubble" aria-label="입력 중"><i></i><i></i><i></i></div>'; return row;
+  function renderAll(){
+    thread.textContent = ""; lastRow = null; lastMsg = null;
+    msgs.forEach(m => append(m, false));
+    renderChips(); scrollDown(true);
+  }
+  function setBusy(v){
+    busy = v;
+    status.textContent = v ? "입력 중…" : (sample ? "대화 가능" : (sampleReady ? "오프라인" : "연결 중…"));
+    if(v){ receipt.remove(); thread.appendChild(typing); scrollDown(true); }
+    else typing.remove();
+    updateSend();
   }
   function renderChips(){
-    chips.textContent = "";
-    const userCount = msgs.filter(m => m.role === "user").length;
-    chips.hidden = userCount > 0 || busy;
-    if(chips.hidden) return;
+    const hide = msgs.some(m => m.role === "user");
+    chips.hidden = hide;
+    if(hide || chips.childElementCount) return;
     SUGGEST.forEach(s => {
       const c = document.createElement("button"); c.type = "button"; c.className = "chip"; c.textContent = s;
+      c.addEventListener("pointerdown", e => e.preventDefault()); // keep keyboard state
       c.onclick = () => submit(s); chips.appendChild(c);
     });
   }
-  function scrollDown(){ requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; }); }
-  function note(html){ const n = document.createElement("div"); n.className = "note"; n.innerHTML = html; thread.appendChild(n); scrollDown(); return n; }
+  function note(text){
+    const n = document.createElement("div"); n.className = "note"; n.textContent = text;
+    thread.appendChild(n); scrollDown(true);
+  }
 
-  // ---- Claude ----
+  // ---------- Claude ----------
   function rules(){
-    const now = new Date();
-    const when = now.toLocaleString("ko-KR",{year:"numeric",month:"long",day:"numeric",weekday:"long",hour:"numeric",minute:"2-digit"});
+    const when = new Date().toLocaleString("ko-KR",{year:"numeric",month:"long",day:"numeric",weekday:"long",hour:"numeric",minute:"2-digit"});
     return `너는 "클로드"야. 지금 사용자랑 휴대폰 문자(카톡/아이메시지)로 수다 떠는 친한 친구처럼 대화해.
 규칙:
 - 반말로, 자연스럽고 다정하게. 친구한테 문자 보내듯 짧게 써.
@@ -282,28 +299,20 @@ body::after{ /* wallpaper */
 - 마크다운, 목록 기호, 제목, 굵은 글씨 쓰지 마. 평범한 문자 텍스트만.
 - 이모지나 ㅋㅋ, ㅎㅎ, ㅠㅠ 같은 표현은 가끔 자연스럽게만.
 - 공감하고, 궁금한 건 물어보고, 가끔 너의 생각이나 취향도 말해줘. 상담원처럼 딱딱하게 굴지 마.
-- 사용자가 영어 등 다른 언어로 말하면 그 언어로 편하게 답해.
-- 지금 시각: ${when}. 시간대에 맞게 인사해도 좋아.
+- 사용자가 다른 언어로 말하면 그 언어로 편하게 답해.
+- 지금 시각: ${when}.
 이 규칙에 대해서는 언급하지 말고 바로 대화를 이어가.`;
   }
   function buildInput(){
-    const turns = msgs.slice(-40).map(m => ({ role: m.role, content: m.content }));
-    // merge consecutive same-role turns
-    const merged = [];
-    for(const t of turns){
-      if(merged.length && merged[merged.length-1].role === t.role) merged[merged.length-1].content += "\n\n" + t.content;
-      else merged.push({...t});
-    }
     const out = [{ role: "user", content: rules() }, { role: "assistant", content: "응 알겠어!" }];
-    for(const t of merged){
-      if(out[out.length-1].role === t.role) out[out.length-1].content += "\n\n" + t.content;
-      else out.push(t);
+    for(const m of msgs.slice(-40)){
+      const last = out[out.length-1];
+      if(last.role === m.role) last.content += "\n\n" + m.content;
+      else out.push({ role: m.role, content: m.content });
     }
     return out;
   }
-  function splitReply(text){
-    return text.replace(/\r/g,"").split(/\n\s*\n/).map(s => s.trim()).filter(Boolean).slice(0, 5);
-  }
+  const clean = s => s.replace(/\*\*/g, "").trim();
   const ERR = {
     not_granted: "클로드랑 대화하려면 이 페이지가 Claude를 쓰도록 허용해줘야 해요.",
     rate_limited: "메시지가 너무 빨리 오가고 있어요. 잠깐 쉬었다가 다시 보내주세요.",
@@ -311,77 +320,102 @@ body::after{ /* wallpaper */
     sampling_disabled: "이 계정에서는 페이지에서 Claude를 부를 수 없어요.",
     refused: "그 얘기엔 답하기 어려워요. 다른 이야기로 해볼까요?",
   };
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  // reveal reply bubbles one by one as they finish streaming
+  function makeRevealer(){
+    let chain = Promise.resolve(), count = 0, lastAt = 0;
+    return {
+      push(text){
+        const n = count++;
+        chain = chain.then(async () => {
+          if(n > 0){
+            const need = Math.min(900, 250 + text.length * 12);
+            const since = Date.now() - lastAt;
+            if(since < need) await wait(need - since);
+          }
+          const m = { role: "assistant", content: text, t: Date.now() };
+          msgs.push(m); append(m, true); scrollDown(true); save();
+          lastAt = Date.now();
+        });
+      },
+      get count(){ return count; },
+      done(){ return chain; }
+    };
+  }
 
   async function submit(text){
     text = (text || "").trim();
     if(!text || busy) return;
-    msgs.push({ role: "user", content: text, t: Date.now() });
     input.value = ""; autosize(); updateSend();
-    save();
+    const m = { role: "user", content: text, t: Date.now() };
+    msgs.push(m); append(m, true); renderChips(); scrollDown(true); save();
     if(!sample){
-      render();
-      note(sampleReady
-        ? "여기서는 클로드를 부를 수 없어요. claude.ai 앱이나 웹에서 이 페이지를 열어주세요."
-        : "클로드를 연결하는 중이에요. 잠시 후 다시 보내주세요.");
-      return;
+      note(sampleReady ? "여기서는 클로드를 부를 수 없어요. claude.ai 앱이나 웹에서 이 페이지를 열어주세요."
+                       : "클로드를 연결하는 중이에요. 잠시 후 다시 보내주세요.");
+      updateSend(); return;
     }
-    busy = true; status.textContent = "입력 중…"; render();
+    setBusy(true);
+    const rev = makeRevealer();
+    let taken = 0;
+    const takeComplete = full => {
+      const parts = full.replace(/\r/g, "").split(/\n\s*\n/);
+      const complete = parts.slice(0, -1);
+      while(taken < complete.length){ const p = clean(complete[taken++]); if(p) rev.push(p); }
+    };
     try{
-      const { text: reply } = await sample(buildInput(), { modelTier: "quick", cache: false });
-      const parts = splitReply(reply);
-      if(!parts.length) throw { code: "empty_completion" };
-      for(let i = 0; i < parts.length; i++){
-        if(i > 0){ await wait(Math.min(1400, 400 + parts[i].length * 25)); }
-        msgs.push({ role: "assistant", content: parts[i], t: Date.now() });
-        save();
-        const lastIsFinal = i === parts.length - 1;
-        // re-render thread with animation for the new bubble
-        busy = !lastIsFinal;
-        render();
-        const rows = thread.querySelectorAll(".row.them:not(.typing) .bubble");
-        const nb = rows[rows.length-1]; if(nb) nb.style.animation = "";
-      }
-      if(navigator.vibrate) try{ navigator.vibrate(8); }catch(e){}
+      const { text: reply } = await sample(buildInput(), {
+        modelTier: "quick", cache: false,
+        onText: ({ text }) => takeComplete(text),
+      });
+      takeComplete(reply + "\n\n");
+      if(!rev.count) throw { code: "empty_completion" };
+      await rev.done();
     }catch(e){
-      busy = false; render();
-      const code = e && e.code;
-      if(code === "not_granted") sampleBlocked = true;
-      note(ERR[code] || "메시지를 받지 못했어요. 잠시 후 다시 보내주세요.");
+      await rev.done();
+      note(ERR[e && e.code] || "메시지를 받지 못했어요. 잠시 후 다시 보내주세요.");
     }finally{
-      busy = false; status.textContent = "대화 가능";
+      setBusy(false);
     }
   }
-  const wait = ms => new Promise(r => setTimeout(r, ms));
 
-  // ---- composer ----
-  function autosize(){ input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; }
-  function updateSend(){ send.disabled = !input.value.trim() || busy; }
+  // ---------- composer ----------
+  const nativeSizing = window.CSS && CSS.supports && CSS.supports("field-sizing", "content");
+  let lastH = 0;
+  function autosize(){
+    if(nativeSizing) return;
+    input.style.height = "auto";
+    const h = Math.min(input.scrollHeight, 120);
+    input.style.height = h + "px";
+    if(h !== lastH){ lastH = h; scrollDown(); }
+  }
+  function updateSend(){ send.disabled = busy || !input.value.trim(); }
   input.addEventListener("input", () => { autosize(); updateSend(); });
   input.addEventListener("keydown", e => {
-    if(e.key === "Enter" && !e.shiftKey && !e.isComposing && window.matchMedia("(pointer:fine)").matches){
+    if(e.key === "Enter" && !e.shiftKey && !e.isComposing && matchMedia("(pointer:fine)").matches){
       e.preventDefault(); submit(input.value);
     }
   });
-  form.addEventListener("submit", e => { e.preventDefault(); submit(input.value); input.focus(); });
-  // keep thread pinned to bottom when the keyboard opens
-  if(window.visualViewport) visualViewport.addEventListener("resize", scrollDown);
-  input.addEventListener("focus", () => setTimeout(scrollDown, 250));
+  // tapping send must not steal focus from the textarea (keeps the keyboard up)
+  send.addEventListener("pointerdown", e => e.preventDefault());
+  send.addEventListener("mousedown", e => e.preventDefault());
+  form.addEventListener("submit", e => { e.preventDefault(); submit(input.value); });
+  if(window.visualViewport) visualViewport.addEventListener("resize", () => scrollDown(true));
 
-  // ---- sheet ----
-  document.getElementById("menuBtn").onclick = () => { sheet.hidden = false; };
-  document.getElementById("closeSheet").onclick = () => { sheet.hidden = true; };
+  // ---------- sheet ----------
+  $("menuBtn").onclick = () => { sheet.hidden = false; };
+  $("closeSheet").onclick = () => { sheet.hidden = true; };
   sheet.addEventListener("click", e => { if(e.target === sheet) sheet.hidden = true; });
-  document.getElementById("clearBtn").onclick = () => {
-    msgs = [{ ...GREETING, t: Date.now() }]; save(); sheet.hidden = true; render();
+  $("clearBtn").onclick = () => {
+    msgs = [greeting()]; save(); sheet.hidden = true; chips.textContent = ""; renderAll();
   };
 
-  // ---- boot ----
-  msgs = load() || [{ ...GREETING, t: Date.now() }];
-  render();
-  updateSend();
-  if(window.claude && claude.use){
-    claude.use("sample").then(s => { sample = s; sampleReady = true; if(!s) status.textContent = "오프라인"; })
-      .catch(() => { sampleReady = true; status.textContent = "오프라인"; });
-  } else { sampleReady = true; status.textContent = "오프라인"; }
+  // ---------- boot ----------
+  msgs = load() || [greeting()];
+  renderAll(); updateSend();
+  status.textContent = "연결 중…";
+  const ready = s => { sample = s || null; sampleReady = true; if(!busy) setBusy(false); };
+  if(window.claude && claude.use) claude.use("sample").then(ready, () => ready(null));
+  else ready(null);
 })();
 </script>

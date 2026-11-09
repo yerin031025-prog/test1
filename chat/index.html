@@ -195,7 +195,7 @@ button{touch-action:manipulation; -webkit-tap-highlight-color:transparent}
         <li><b>안드로이드</b>: Chrome으로 열기 → 오른쪽 위 <b>⋮</b> → <b>홈 화면에 추가</b></li>
       </ol>
     </div>
-    <p>대화 내용은 이 기기의 브라우저에만 저장돼요.</p>
+    <p>대화 내용은 내 Claude 계정에 저장돼서 앱, Safari, 다른 기기 어디서 열어도 이어져요. 나만 볼 수 있어요.</p>
     <button class="danger" id="clearBtn">대화 내용 모두 지우기</button>
     <button id="closeSheet">닫기</button>
   </div>
@@ -210,14 +210,29 @@ button{touch-action:manipulation; -webkit-tap-highlight-color:transparent}
   const status = $("status"), chips = $("chips"), sheet = $("sheet");
 
   const SUGGEST = ["오늘 점심 뭐 먹지?", "나 오늘 좀 피곤해 ㅠ", "주말에 뭐 할까", "심심해 놀아줘", "자기 전에 볼 영화 추천!"];
-  const greeting = () => ({ role: "assistant", content: "안녕! 나 클로드야 😊\n오늘 하루 어땠어?", t: Date.now() });
+  const newId = t => "m" + t + "-" + Math.random().toString(36).slice(2, 7);
+  const greeting = () => { const t = Date.now(); return { id: newId(t), role: "assistant", content: "안녕! 나 클로드야 😊\n오늘 하루 어땠어?", t }; };
 
   let msgs = [], busy = false, sample = null, sampleReady = false;
   let lastRow = null, lastMsg = null;
+  let remote = null; // the viewer's own message collection in the account store
 
   // ---------- storage ----------
   let saveTimer = 0;
-  function load(){ try{ const v = JSON.parse(localStorage.getItem(KEY) || "null"); if(Array.isArray(v) && v.length) return v; }catch(e){} return null; }
+  function load(){
+    try{
+      const v = JSON.parse(localStorage.getItem(KEY) || "null");
+      if(Array.isArray(v) && v.length) return v.map((m, i) => m.id ? m : { ...m, id: "m" + m.t + "-l" + i });
+    }catch(e){}
+    return null;
+  }
+  // save one message to the account (follows the viewer to every device)
+  function persist(m){
+    save();
+    if(!remote) return;
+    remote.doc(m.id).set({ role: m.role, content: m.content, t: m.t })
+      .catch(e => { if(e && e.code === "unavailable") setTimeout(() => remote && remote.doc(m.id).set({ role: m.role, content: m.content, t: m.t }).catch(() => {}), 800 + Math.random() * 800); });
+  }
   function save(){ clearTimeout(saveTimer); saveTimer = setTimeout(() => { try{ localStorage.setItem(KEY, JSON.stringify(msgs.slice(-200))); }catch(e){} }, 300); }
 
   // ---------- DOM pieces that persist ----------
@@ -334,8 +349,9 @@ button{touch-action:manipulation; -webkit-tap-highlight-color:transparent}
             const since = Date.now() - lastAt;
             if(since < need) await wait(need - since);
           }
-          const m = { role: "assistant", content: text, t: Date.now() };
-          msgs.push(m); append(m, true); scrollDown(true); save();
+          const t = Date.now();
+          const m = { id: newId(t), role: "assistant", content: text, t };
+          msgs.push(m); append(m, true); scrollDown(true); persist(m);
           lastAt = Date.now();
         });
       },
@@ -348,8 +364,9 @@ button{touch-action:manipulation; -webkit-tap-highlight-color:transparent}
     text = (text || "").trim();
     if(!text || busy) return;
     input.value = ""; autosize(); updateSend();
-    const m = { role: "user", content: text, t: Date.now() };
-    msgs.push(m); append(m, true); renderChips(); scrollDown(true); save();
+    const t = Date.now();
+    const m = { id: newId(t), role: "user", content: text, t };
+    msgs.push(m); append(m, true); renderChips(); scrollDown(true); persist(m);
     if(!sample){
       note(sampleReady ? "여기서는 클로드를 부를 수 없어요. claude.ai 앱이나 웹에서 이 페이지를 열어주세요."
                        : "클로드를 연결하는 중이에요. 잠시 후 다시 보내주세요.");
@@ -406,8 +423,17 @@ button{touch-action:manipulation; -webkit-tap-highlight-color:transparent}
   $("menuBtn").onclick = () => { sheet.hidden = false; };
   $("closeSheet").onclick = () => { sheet.hidden = true; };
   sheet.addEventListener("click", e => { if(e.target === sheet) sheet.hidden = true; });
-  $("clearBtn").onclick = () => {
+  $("clearBtn").onclick = async () => {
+    const old = msgs.map(m => m.id);
     msgs = [greeting()]; save(); sheet.hidden = true; chips.textContent = ""; renderAll();
+    if(!remote) return;
+    try{
+      const snap = await remote.get();
+      for(const d of snap.docs){ if(!msgs.some(m => m.id === d.id)) await remote.doc(d.id).delete(); }
+    }catch(e){
+      for(const id of old){ try{ await remote.doc(id).delete(); }catch(_){} }
+    }
+    persist(msgs[0]);
   };
 
   // ---------- boot ----------
@@ -415,7 +441,33 @@ button{touch-action:manipulation; -webkit-tap-highlight-color:transparent}
   renderAll(); updateSend();
   status.textContent = "연결 중…";
   const ready = s => { sample = s || null; sampleReady = true; if(!busy) setBusy(false); };
-  if(window.claude && claude.use) claude.use("sample").then(ready, () => ready(null));
-  else ready(null);
+  if(window.claude && claude.use){
+    claude.use("sample").then(ready, () => ready(null));
+    connectHistory();
+  } else ready(null);
+
+  async function connectHistory(){
+    try{
+      const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+      if(!db || !user) return;
+      const uid = await user.id();
+      if(!uid) return;
+      const col = db.collection("data/users/" + uid);
+      const snap = await col.orderBy("t", "desc").limit(300).get();
+      remote = col;
+      const saved = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.content && m.role).reverse();
+      if(saved.length){
+        // merge anything only this device has (e.g. sent before this update)
+        const have = new Set(saved.map(m => m.id));
+        const localOnly = msgs.some(m => m.role === "user") ? msgs.filter(m => !have.has(m.id)) : [];
+        const merged = [...saved, ...localOnly].sort((a, b) => a.t - b.t);
+        localOnly.forEach(m => remote.doc(m.id).set({ role: m.role, content: m.content, t: m.t }).catch(() => {}));
+        if(!busy){ msgs = merged; save(); chips.textContent = ""; renderAll(); }
+      } else {
+        // first time on the account: upload what this device has
+        for(const m of msgs) await col.doc(m.id).set({ role: m.role, content: m.content, t: m.t }).catch(() => {});
+      }
+    }catch(e){ /* keep using this device's copy */ }
+  }
 })();
 </script>

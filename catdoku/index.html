@@ -162,6 +162,22 @@ summary::-webkit-details-marker{display:none}
 summary::after{content:"";width:8px;height:8px;border-right:1.8px solid var(--muted);border-bottom:1.8px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform .2s}
 details[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
 details ul{margin:0 0 14px;padding-left:18px;color:var(--muted);line-height:1.75}
+.timer .best{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--line)}
+.rec{overflow-x:auto;margin-bottom:12px}
+.rec table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rec th{font-size:12px;font-weight:600;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.rec td{text-align:right;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.rec th:first-child,.rec td:first-child{text-align:left}
+.rec tr.cur td{background:var(--accent-soft)}
+.rec td.none{color:var(--muted)}
+.recent{margin:0 0 12px;display:flex;flex-direction:column;gap:4px}
+.recent h3{font-size:12px;font-weight:600;color:var(--muted);margin:4px 0}
+.recent div{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.recent div b{color:var(--ink);font-weight:600}
+.recent .tag{font-size:11px;padding:1px 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:6px}
+.recfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:12px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.recfoot button{background:none;border:none;color:var(--muted);text-decoration:underline;padding:4px 0}
+.recfoot button.arm{color:var(--bad);font-weight:600}
 details li b{color:var(--ink);font-weight:600}
 
 /* 결과 창 */
@@ -176,6 +192,9 @@ details li b{color:var(--ink);font-weight:600}
 .modal h2{margin:8px 0 4px;font-size:20px;letter-spacing:-.01em}
 .modal p{margin:0;color:var(--muted);line-height:1.6}
 .modal .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 4px}
+.modal .newbest{display:inline-block;margin-top:10px;padding:4px 12px;border-radius:999px;background:var(--gold);color:#2a221d;font-weight:700;font-size:13px;
+  animation:catIn .7s .5s cubic-bezier(.3,1.6,.5,1) backwards}
+.modal .stats div.hi{box-shadow:inset 0 0 0 2px var(--gold)}
 .modal .stats div{background:var(--bg);border-radius:10px;padding:8px 4px}
 .modal .stats b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
 .modal .stats span{font-size:11px;color:var(--muted)}
@@ -218,7 +237,7 @@ details li b{color:var(--ink);font-weight:600}
   <div class="status">
     <div class="lives" id="lives" aria-label="생명"></div>
     <div class="count"><svg aria-hidden="true"><use href="#cat"/></svg><span id="found">0</span><span class="of">/ <span id="total">7</span></span></div>
-    <div class="timer"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg><span id="time">00:00</span></div>
+    <div class="timer"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg><span id="time">00:00</span><span class="best" id="best" title="이 크기 최고 기록" hidden></span></div>
   </div>
 
   <div class="msg" id="msg" aria-live="polite"></div>
@@ -240,6 +259,13 @@ details li b{color:var(--ink);font-weight:600}
 
   <label class="switch"><input type="checkbox" id="autoX"> 찾은 고양이 때문에 고양이가 못 오는 칸에 점 표시</label>
 
+  <details id="records">
+    <summary>시간 기록</summary>
+    <div class="rec"><table><thead><tr><th>크기</th><th>최고 기록</th><th>힌트 없이</th><th>평균</th><th>클리어</th></tr></thead><tbody id="recBody"></tbody></table></div>
+    <div class="recent" id="recent"></div>
+    <div class="recfoot"><span>기록은 이 브라우저에만 저장돼요.</span><button id="recClear">기록 지우기</button></div>
+  </details>
+
   <details id="rules">
     <summary>규칙과 조작</summary>
     <ul>
@@ -257,6 +283,7 @@ details li b{color:var(--ink);font-weight:600}
   <div class="big"><svg aria-hidden="true"><use href="#cat"/></svg></div>
   <h2 id="ovTitle">고양이를 다 찾았어요!</h2>
   <p id="ovText"></p>
+  <div id="ovBest"></div>
   <div class="stats" id="ovStats"></div>
   <div class="row">
     <button class="ghostbtn" id="retryBtn">같은 판 다시</button>
@@ -431,17 +458,57 @@ function guess(i){ // 우클릭·더블클릭: 고양이 찾기
   }
   save();render();
 }
-function showResult(win){
+// ================= 시간 기록 (이 브라우저에 저장) =================
+const REC_KEY='nyang-records';
+function loadRec(){try{return JSON.parse(localStorage.getItem(REC_KEY))||{}}catch(e){return {}}}
+function saveRec(r){try{localStorage.setItem(REC_KEY,JSON.stringify(r))}catch(e){}}
+const bestOf=(list,noHint)=>{let b=null;for(const g of list||[])if((!noHint||!g.h)&&(b===null||g.t<b))b=g.t;return b};
+function recordWin(){ // 반환: {best:이전 최고, isBest, bestNoHint, isBestNoHint}
+  const rec=loadRec(),list=rec[S.n]||[],hints=S.use.cat+S.use.no+S.use.info;
+  const prev=bestOf(list,false),prevNH=bestOf(list,true);
+  list.push({t:S.time,h:hints,l:S.lives,d:Date.now()});
+  rec[S.n]=list.slice(-100);saveRec(rec);
+  return{prev,isBest:prev===null||S.time<prev,isBestNoHint:!hints&&(prevNH===null||S.time<prevNH)};
+}
+function renderRecords(){
+  const rec=loadRec();
+  $('recBody').innerHTML=[5,6,7,8,9,10].map(n=>{
+    const list=rec[n]||[],b=bestOf(list,false),nh=bestOf(list,true);
+    const avg=list.length?Math.round(list.reduce((a,g)=>a+g.t,0)/list.length):null;
+    const td=v=>v===null?'<td class="none">–</td>':`<td>${fmt(v)}</td>`;
+    return `<tr class="${S&&S.n===n?'cur':''}"><td>${n}×${n}</td>${td(b)}${td(nh)}${td(avg)}<td>${list.length}</td></tr>`;
+  }).join('');
+  const all=[];for(const n in rec)for(const g of rec[n])all.push({...g,n:+n});
+  all.sort((a,b)=>b.d-a.d);
+  $('recent').innerHTML=all.length?'<h3>최근 기록</h3>'+all.slice(0,5).map(g=>{
+    const d=new Date(g.d),when=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div><span>${g.n}×${g.n} · ${when}${g.h?'':'<span class="tag">힌트 없이</span>'}</span><b>${fmt(g.t)}</b></div>`}).join('')
+    :'<h3>아직 기록이 없어요. 판을 하나 끝내면 여기에 남아요.</h3>';
+  const b=bestOf(rec[S?S.n:0],false);
+  $('best').hidden=b===null;if(b!==null)$('best').textContent='최고 '+fmt(b);
+}
+let recArm=false;
+$('recClear').onclick=e=>{
+  if(!recArm){recArm=true;e.target.textContent='한 번 더 누르면 모두 지워져요';e.target.classList.add('arm');
+    setTimeout(()=>{recArm=false;e.target.textContent='기록 지우기';e.target.classList.remove('arm')},3000);return}
+  recArm=false;saveRec({});e.target.textContent='기록 지우기';e.target.classList.remove('arm');renderRecords();say('시간 기록을 모두 지웠어요.');
+};
+
+function showResult(win,r){
   const u=S.use,hints=u.cat+u.no+u.info;
   $('ovTitle').textContent=win?'고양이를 다 찾았어요!':'생명을 다 썼어요';
-  $('ovText').textContent=win?(hints?`${S.n}×${S.n} 판을 풀었어요.`:`${S.n}×${S.n} 판을 힌트 없이 풀었어요!`)
+  $('ovText').textContent=win?(hints?`${S.n}×${S.n} 판을 풀었어요. (힌트 ${hints}번)`:`${S.n}×${S.n} 판을 힌트 없이 풀었어요!`)
                              :'숨은 고양이 위치를 판에 흐리게 보여 줄게요.';
-  $('ovStats').innerHTML=win?`<div><b>${fmt(S.time)}</b><span>기록</span></div><div><b>${S.lives}/${LIVES}</b><span>남은 생명</span></div><div><b>${hints}</b><span>힌트</span></div>`:'';
+  const best=bestOf(loadRec()[S.n],false);
+  $('ovStats').innerHTML=win?`<div><b>${fmt(S.time)}</b><span>이번 기록</span></div><div><b>${best===null?'–':fmt(best)}</b><span>${S.n}×${S.n} 최고</span></div><div><b>${S.lives}/${LIVES}</b><span>남은 생명</span></div>`:'';
   $('ovStats').hidden=!win;
+  $('ovBest').innerHTML=win&&r&&r.isBest?`<span class="newbest">${r.prev===null?'첫 기록이에요!':`새 최고 기록! (이전 ${fmt(r.prev)})`}</span>`
+    :win&&r&&r.isBestNoHint?'<span class="newbest">힌트 없이 새 최고 기록!</span>':'';
+  if(win&&r&&r.isBest)$('ovStats').firstElementChild.classList.add('hi');
 }
 function checkWin(){
   if(!S.sol.every((c,r)=>S.mark[r*S.n+c]===CAT))return;
-  S.done=true;save();showResult(true);
+  S.done=true;save();const rr=recordWin();showResult(true,rr);renderRecords();
   // 고양이들이 줄 순서대로 폴짝 뛰고 색종이
   S.sol.forEach((c,r)=>setTimeout(()=>{
     const i=r*S.n+c,d=board.children[i];if(!d)return;
@@ -616,7 +683,7 @@ function build(){
     d.dataset.i=i;d.setAttribute('role','gridcell');
     board.appendChild(d);
   }
-  $('total').textContent=n;
+  $('total').textContent=n;renderRecords();
   [...seg.children].forEach(b=>{const on=+b.dataset.n===n;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
 }
 function render(){
@@ -693,6 +760,7 @@ document.addEventListener('keydown',e=>{
 });
 setInterval(()=>{if(S&&!S.done&&!document.hidden){S.time++;$('time').textContent=fmt(S.time);if(S.time%5===0)save()}},1000);
 
+renderRecords();
 if(load()){build();render();say(S.given>=0?'이 판은 정보가 부족해서 고양이 한 마리를 먼저 알려 줬어요. ("처음" 표시)':'')}
 else newGame(7);
 </script>

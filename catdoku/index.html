@@ -4,171 +4,260 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>냥도쿠</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
-/* 한 화면 퍼즐: 상단 바 · 안내 줄 · 정사각 보드 · 도구/힌트 줄 */
+/* 레이아웃: 한 열 카드형 — 헤더 · 크기 탭 · 상태 줄 · 안내 · 판 · 힌트 · 도구 · 규칙 */
 :root{
-  --bg:#f7f3ee; --panel:#ffffff; --ink:#2e2724; --muted:#8c7d74; --grid:rgba(60,40,30,.18);
-  --wall:#3a2c25; --btn:#ece3da; --btnh:#e2d5c8; --accent:#d9692b; --bad:#d63a2f; --hl:rgba(255,255,255,.45);
-  --r0:#f39a96; --r1:#f7e07e; --r2:#bfe3a5; --r3:#a9d8ef; --r4:#cdb9f2;
-  --r5:#f7c3e0; --r6:#a8e3d4; --r7:#e6d7b4; --r8:#c9cfd9; --r9:#f5b56a;
+  --bg:#f3f1ee; --card:#ffffff; --ink:#1f1b18; --muted:#857d76; --line:rgba(31,27,24,.08);
+  --accent:#4b57a6; --accent-ink:#ffffff; --accent-soft:rgba(75,87,166,.10);
+  --bad:#d9483b; --gold:#e8b931; --heart:#e5484d;
+  --wall:rgba(38,28,22,.62); --grid:rgba(38,28,22,.10);
+  --mark:rgba(31,27,24,.52); --cat:#2a221d; --cat-eye:#fff8ef;
+  --hl:rgba(255,255,255,.42); --shadow:0 1px 2px rgba(31,27,24,.06),0 10px 30px rgba(31,27,24,.08);
+  --r0:#e9b4ab; --r1:#ecd79c; --r2:#c3d8ad; --r3:#b0cee0; --r4:#cdc0e4;
+  --r5:#ecc1d2; --r6:#b2dacf; --r7:#ddccb6; --r8:#c3c9d3; --r9:#efc19a;
+  --font:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#1d1916; --panel:#28221e; --ink:#f2e8df; --muted:#a3948a; --grid:rgba(0,0,0,.35);
-    --wall:#0e0b09; --btn:#372e29; --btnh:#463a33; --accent:#ff9150; --bad:#ff6b5e; --hl:rgba(255,255,255,.18);
-    --r0:#a84f4b; --r1:#a39445; --r2:#6a8c55; --r3:#4f7f99; --r4:#7a66a3;
-    --r5:#9e6688; --r6:#4f8c7c; --r7:#8f8263; --r8:#6c7380; --r9:#a8703a;
+    --bg:#141312; --card:#1e1c1a; --ink:#eee9e3; --muted:#9a928a; --line:rgba(255,255,255,.08);
+    --accent:#929bec; --accent-ink:#15161f; --accent-soft:rgba(146,155,236,.14);
+    --bad:#ff6a5c; --gold:#f2c94c; --heart:#ff5f66;
+    --wall:rgba(0,0,0,.75); --grid:rgba(0,0,0,.28);
+    --mark:rgba(255,250,244,.6); --cat:#f6efe7; --cat-eye:#2a221d;
+    --hl:rgba(255,255,255,.14); --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    --r0:#7a4d47; --r1:#776842; --r2:#536648; --r3:#40606f; --r4:#5e5276;
+    --r5:#744d5f; --r6:#41675e; --r7:#6a5f4f; --r8:#505766; --r9:#7a5a3f;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#1d1916; --panel:#28221e; --ink:#f2e8df; --muted:#a3948a; --grid:rgba(0,0,0,.35);
-  --wall:#0e0b09; --btn:#372e29; --btnh:#463a33; --accent:#ff9150; --bad:#ff6b5e; --hl:rgba(255,255,255,.18);
-  --r0:#a84f4b; --r1:#a39445; --r2:#6a8c55; --r3:#4f7f99; --r4:#7a66a3;
-  --r5:#9e6688; --r6:#4f8c7c; --r7:#8f8263; --r8:#6c7380; --r9:#a8703a;
+  --bg:#141312; --card:#1e1c1a; --ink:#eee9e3; --muted:#9a928a; --line:rgba(255,255,255,.08);
+  --accent:#929bec; --accent-ink:#15161f; --accent-soft:rgba(146,155,236,.14);
+  --bad:#ff6a5c; --gold:#f2c94c; --heart:#ff5f66;
+  --wall:rgba(0,0,0,.75); --grid:rgba(0,0,0,.28);
+  --mark:rgba(255,250,244,.6); --cat:#f6efe7; --cat-eye:#2a221d;
+  --hl:rgba(255,255,255,.14); --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  --r0:#7a4d47; --r1:#776842; --r2:#536648; --r3:#40606f; --r4:#5e5276;
+  --r5:#744d5f; --r6:#41675e; --r7:#6a5f4f; --r8:#505766; --r9:#7a5a3f;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-  display:flex;justify-content:center;padding:16px}
-.wrap{width:100%;max-width:540px;display:flex;flex-direction:column;gap:12px}
-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-h1{font-size:26px;margin:0}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-select,button{font:inherit;color:var(--ink)}
-select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
-.primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer}
-.ghostbtn{background:var(--btn);border:none;border-radius:8px;padding:6px 12px;cursor:pointer}
-.stats{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--muted)}
-.stats b{color:var(--ink);font-variant-numeric:tabular-nums}
-.lives{font-size:18px;letter-spacing:2px}
-.lives .gone{opacity:.2;filter:grayscale(1)}
-.msg{min-height:2.9em;font-size:14px;line-height:1.45;color:var(--ink);background:var(--btn);border-radius:10px;
-  padding:8px 12px;display:flex;align-items:center}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;-webkit-font-smoothing:antialiased;display:flex;justify-content:center;padding:16px}
+.wrap{width:100%;max-width:520px;display:flex;flex-direction:column;gap:14px;padding-block:8px 32px}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* 헤더 */
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.brand h1 svg{width:28px;height:28px}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.primary{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:var(--accent-ink);border:none;border-radius:999px;padding:9px 16px;font-weight:600}
+.primary:hover{filter:brightness(1.07)}
+
+/* 크기 탭 */
+.seg{display:grid;grid-template-columns:repeat(6,1fr);background:var(--line);border-radius:12px;padding:3px;gap:2px}
+.seg button{border:none;background:none;border-radius:9px;padding:7px 0;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* 상태 줄 */
+.status{display:flex;align-items:center;justify-content:space-between}
+.lives{display:flex;gap:4px}
+.lives svg{width:20px;height:20px;fill:var(--heart);transition:opacity .3s}
+.lives svg.gone{fill:var(--muted);opacity:.25}
+.lives svg.breaking{animation:heartBreak .8s ease-in forwards}
+@keyframes heartBreak{0%{transform:scale(1)}30%{transform:scale(1.5)}55%{transform:scale(1.15) rotate(-18deg)}100%{transform:none;fill:var(--muted);opacity:.25}}
+.count{display:flex;align-items:center;gap:6px;font-weight:600;font-variant-numeric:tabular-nums}
+.count svg{width:18px;height:18px}
+.count .of{color:var(--muted);font-weight:500}
+.timer{display:flex;align-items:center;gap:6px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* 안내 줄 */
+.msg{min-height:48px;display:flex;align-items:center;gap:12px;background:var(--card);border-radius:12px;padding:10px 12px 10px 14px;
+  box-shadow:0 0 0 1px var(--line);line-height:1.5}
+.msg .t{flex:1;min-width:0}
 .msg:empty::before{content:"좌클릭으로 ✕ 메모, 우클릭이나 더블클릭으로 고양이를 찾아요.";color:var(--muted)}
-.msg.warn{color:var(--bad);font-weight:600}
-.msg{gap:10px;justify-content:space-between}
-.msg .apply{flex:none;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600;
+.msg.warn .t{color:var(--bad);font-weight:500}
+.msg.info{box-shadow:0 0 0 1px var(--accent-soft),inset 3px 0 0 var(--accent)}
+.msg .apply{flex:none;display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:var(--accent-ink);border:none;border-radius:999px;padding:7px 14px;font-weight:600;
   animation:applyIn .35s cubic-bezier(.3,1.5,.5,1)}
-.msg .apply:hover{filter:brightness(1.08)}
-.msg .apply:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.msg .apply svg{width:14px;height:14px}
 @keyframes applyIn{from{transform:scale(.6);opacity:0}}
-.board{display:grid;aspect-ratio:1;max-width:100%;border:3px solid var(--wall);border-radius:8px;overflow:hidden;
-  user-select:none;touch-action:none;background:var(--wall)}
-.cell{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;
-  box-shadow:inset 0 0 0 .5px var(--grid);line-height:1}
-.cell.bt{border-top:2.5px solid var(--wall)} .cell.bl{border-left:2.5px solid var(--wall)}
-.cell .m{pointer-events:none;position:relative;z-index:2}
-.cell .x{color:var(--ink);opacity:.4;font-weight:700}
-.cell .no{color:var(--ink);opacity:.8;font-weight:900}
-.cell .dot{width:18%;aspect-ratio:1;border-radius:50%;background:var(--ink);opacity:.25}
-.cell .ghost{opacity:.45}
-.cell.start::before{content:"처음";position:absolute;top:2px;left:3px;font-size:9px;font-weight:700;color:var(--ink);opacity:.6;z-index:2}
-/* 찾았을 때: 고양이가 튀어나오며 반짝 */
+
+/* 판 */
+.boardwrap{position:relative;background:var(--card);border-radius:18px;padding:10px;box-shadow:var(--shadow)}
+.board{display:grid;aspect-ratio:1;width:100%;max-width:100%;border-radius:10px;overflow:hidden;user-select:none;touch-action:none;
+  box-shadow:0 0 0 2px var(--wall)}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 0 0 .5px var(--grid);transition:filter .2s}
+.cell:hover{filter:brightness(1.04)}
+.cell.bt{border-top:2px solid var(--wall)} .cell.bl{border-left:2px solid var(--wall)}
+.cell .m{pointer-events:none;position:relative;z-index:2;display:block}
+.cell .cat{width:64%;height:64%}
+.cell .x{width:34%;height:34%;stroke:var(--mark);stroke-width:2.6;fill:none;stroke-linecap:round}
+.cell .x.miss{stroke:var(--bad);stroke-width:3}
+.cell .dot{width:14%;aspect-ratio:1;border-radius:50%;background:var(--mark);opacity:.45}
+.cell .ghost{opacity:.35}
+.cell.start::before{content:"처음";position:absolute;top:3px;left:3px;font-size:9px;font-weight:600;line-height:1;padding:2px 4px;border-radius:4px;
+  background:var(--hl);color:var(--ink);z-index:3}
 .cell.found .cat{animation:catIn .7s cubic-bezier(.3,1.6,.5,1)}
 .cell.found{animation:glow .8s ease-out}
-@keyframes catIn{0%{transform:scale(0) rotate(-40deg)}45%{transform:scale(1.5) rotate(12deg)}70%{transform:scale(.9) rotate(-4deg)}100%{transform:scale(1) rotate(0)}}
-@keyframes glow{0%,100%{filter:none}25%{filter:brightness(1.35) saturate(1.3)}}
-/* 틀렸을 때: 칸 흔들림 + 빨간 번쩍 + ✕ 도장 */
+@keyframes catIn{0%{transform:scale(0) rotate(-30deg)}45%{transform:scale(1.35) rotate(8deg)}70%{transform:scale(.92) rotate(-3deg)}100%{transform:none}}
+@keyframes glow{0%,100%{filter:none}25%{filter:brightness(1.25) saturate(1.2)}}
 .cell.wrong{animation:shake .45s}
-.cell.wrong .no{color:var(--bad);opacity:1;animation:stamp .4s cubic-bezier(.2,1.4,.5,1)}
-@keyframes shake{15%,55%{transform:translateX(-6px) rotate(-3deg)}35%,75%{transform:translateX(6px) rotate(3deg)}}
-@keyframes stamp{0%{transform:scale(3);opacity:0}60%{transform:scale(.85);opacity:1}100%{transform:scale(1)}}
+.cell.wrong .x{animation:stamp .4s cubic-bezier(.2,1.4,.5,1)}
+@keyframes shake{15%,55%{transform:translateX(-5px)}35%,75%{transform:translateX(5px)}}
+@keyframes stamp{0%{transform:scale(2.6);opacity:0}60%{transform:scale(.85);opacity:1}100%{transform:none}}
 .board.hit{animation:hit .35s}
 @keyframes hit{25%{transform:translate(-3px,2px)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,-1px)}}
-.board.dead .cell{filter:grayscale(.7) brightness(.85);transition:filter .8s}
+.board.dead .cell{filter:grayscale(.75) brightness(.9);transition:filter .8s}
 .cell.dance .cat{animation:dance .6s ease-in-out}
-@keyframes dance{30%{transform:translateY(-35%) scale(1.25) rotate(-10deg)}60%{transform:translateY(0) scale(.95) rotate(8deg)}}
-/* 효과 레이어 */
-.boardwrap{position:relative}
-.fx{position:absolute;inset:0;pointer-events:none;z-index:5}
-.fx .p{position:absolute;transform:translate(-50%,-50%);animation:fly var(--t,.9s) ease-out forwards}
-@keyframes fly{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}
-  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.1) rotate(var(--rot,0deg));opacity:0}}
-.fx .ring{position:absolute;border:3px solid var(--ring,var(--accent));border-radius:50%;transform:translate(-50%,-50%);animation:ring .6s ease-out forwards}
-@keyframes ring{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}100%{transform:translate(-50%,-50%) scale(2.4);opacity:0}}
-.fx .flash{position:absolute;background:var(--bad);animation:flash .5s ease-out forwards}
-@keyframes flash{0%{opacity:.75}100%{opacity:0}}
-.fx .txt{position:absolute;transform:translate(-50%,-50%);font-weight:800;color:var(--bad);font-size:18px;white-space:nowrap;
-  text-shadow:0 1px 0 var(--bg);animation:rise 1s ease-out forwards}
-@keyframes rise{0%{transform:translate(-50%,-50%);opacity:0}15%{opacity:1}100%{transform:translate(-50%,-180%);opacity:0}}
-.lives span{display:inline-block}
-.lives .breaking{animation:heartBreak .8s ease-in forwards}
-@keyframes heartBreak{0%{transform:scale(1);filter:none;opacity:1}30%{transform:scale(1.6)}55%{transform:scale(1.2) rotate(-20deg)}100%{transform:scale(1) rotate(0);filter:grayscale(1);opacity:.2}}
-.board.focus .cell:not(.hu):not(.ht){filter:saturate(.35) brightness(.88)}
+@keyframes dance{30%{transform:translateY(-30%) scale(1.2) rotate(-8deg)}60%{transform:translateY(0) scale(.96) rotate(6deg)}}
+.board.focus .cell:not(.hu):not(.ht){filter:saturate(.35) brightness(.9)}
 .cell.hu::after{content:"";position:absolute;inset:0;background:var(--hl);z-index:1}
-.cell.ht{box-shadow:inset 0 0 0 3px var(--accent)}
-.cell.ht::after{content:"";position:absolute;inset:0;background:var(--hl);z-index:1;animation:blink 1s infinite}
+.cell.ht{box-shadow:inset 0 0 0 2.5px var(--accent)}
+.cell.ht::after{content:"";position:absolute;inset:0;background:var(--hl);z-index:1;animation:blink 1.1s infinite}
 @keyframes blink{50%{opacity:0}}
-@media (prefers-reduced-motion:reduce){.cell .cat,.cell.wrong,.cell.wrong .no,.cell.found,.board.hit,.cell.ht::after,.lives .breaking{animation:none!important}.fx{display:none}}
-.bar{display:grid;gap:8px}
-.tools{grid-template-columns:repeat(3,1fr)}
-.hints{grid-template-columns:repeat(3,1fr)}
-.bar button{background:var(--btn);border:none;border-radius:10px;padding:9px 4px;cursor:pointer;font-size:14px}
-.bar button:hover{background:var(--btnh)}
-.bar button.on{background:var(--accent);color:#fff}
-.bar button:focus-visible,.primary:focus-visible,.ghostbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.bar small{display:block;font-size:11px;opacity:.75;margin-top:2px}
-.label{font-size:12px;color:var(--muted);margin-bottom:-4px;letter-spacing:.05em}
-.opts{font-size:14px}
-.help{font-size:13px;color:var(--muted);line-height:1.7}
-.help b{color:var(--ink)}
-.overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
-.overlay.show{display:flex}
-.modal{background:var(--panel);border-radius:16px;padding:24px;text-align:center;max-width:340px;width:100%}
-.modal .big{font-size:56px}
-.overlay.show{animation:fadeIn .3s}
-.overlay.show .modal{animation:modalIn .5s cubic-bezier(.3,1.5,.5,1)}
-.overlay.show .big{animation:catIn .8s .15s cubic-bezier(.3,1.6,.5,1) backwards}
+
+/* 효과 레이어 */
+.fx{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible}
+.fx .p{position:absolute;width:var(--s,7px);height:var(--s,7px);border-radius:var(--br,50%);background:var(--c);
+  transform:translate(-50%,-50%);animation:fly var(--t,.8s) cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes fly{0%{transform:translate(-50%,-50%) scale(.4);opacity:1}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--rot,0deg)) scale(1);opacity:0}}
+.fx .ring{position:absolute;border:2px solid var(--ring,var(--gold));border-radius:50%;transform:translate(-50%,-50%);animation:ring .6s ease-out forwards}
+@keyframes ring{0%{transform:translate(-50%,-50%) scale(.25);opacity:1}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}
+.fx .flash{position:absolute;background:var(--bad);border-radius:4px;animation:flash .5s ease-out forwards}
+@keyframes flash{0%{opacity:.6}100%{opacity:0}}
+.fx .txt{position:absolute;transform:translate(-50%,-50%);font-weight:700;color:var(--bad);font-size:16px;white-space:nowrap;animation:rise 1s ease-out forwards}
+@keyframes rise{0%{transform:translate(-50%,-50%);opacity:0}15%{opacity:1}100%{transform:translate(-50%,-190%);opacity:0}}
+
+/* 힌트·도구 */
+.label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.06em;margin:4px 0 -6px 2px}
+.hints{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hint{display:flex;align-items:center;gap:8px;background:var(--card);border:none;border-radius:12px;padding:11px 12px;box-shadow:0 0 0 1px var(--line);text-align:left;font-weight:500}
+.hint:hover{box-shadow:0 0 0 1px var(--accent)}
+.hint span.l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hint svg.cat{width:18px;height:18px}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--line);color:var(--muted);font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.tool{display:inline-flex;align-items:center;gap:6px;background:none;border:none;border-radius:999px;padding:7px 12px;color:var(--muted);font-weight:500}
+.tool:hover{background:var(--line);color:var(--ink)}
+.tool.on{background:var(--accent-soft);color:var(--accent)}
+.tool kbd{font:inherit;font-size:11px;padding:1px 5px;border-radius:4px;box-shadow:0 0 0 1px var(--line)}
+.switch{display:flex;align-items:center;gap:10px;color:var(--muted);cursor:pointer}
+.switch input{appearance:none;width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .2s;flex:none}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .2s}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(14px)}
+.switch input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+details{background:var(--card);border-radius:12px;box-shadow:0 0 0 1px var(--line);padding:0 14px}
+summary{cursor:pointer;padding:12px 0;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";width:8px;height:8px;border-right:1.8px solid var(--muted);border-bottom:1.8px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+details[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+details ul{margin:0 0 14px;padding-left:18px;color:var(--muted);line-height:1.75}
+details li b{color:var(--ink);font-weight:600}
+
+/* 결과 창 */
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(15,12,10,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.show{display:flex;animation:fadeIn .3s}
+.modal{background:var(--card);border-radius:20px;padding:28px 24px 22px;text-align:center;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.overlay.show .modal{animation:modalIn .5s cubic-bezier(.3,1.4,.5,1)}
+.modal .big{width:72px;height:72px;margin:0 auto 6px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center}
+.modal .big svg{width:42px;height:42px}
+.overlay.show .big svg{animation:catIn .8s .15s cubic-bezier(.3,1.6,.5,1) backwards}
+.modal h2{margin:8px 0 4px;font-size:20px;letter-spacing:-.01em}
+.modal p{margin:0;color:var(--muted);line-height:1.6}
+.modal .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 4px}
+.modal .stats div{background:var(--bg);border-radius:10px;padding:8px 4px}
+.modal .stats b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.modal .stats span{font-size:11px;color:var(--muted)}
+.modal .row{display:flex;gap:8px;justify-content:center;margin-top:16px}
+.ghostbtn{background:var(--line);border:none;border-radius:999px;padding:9px 16px;font-weight:600}
 @keyframes fadeIn{from{opacity:0}}
-@keyframes modalIn{from{transform:translateY(30px) scale(.85);opacity:0}}
-.modal h2{margin:8px 0}
-.modal .row{justify-content:center;margin-top:14px}
+@keyframes modalIn{from{transform:translateY(24px) scale(.92);opacity:0}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .fx{display:none}
+}
+@media (max-width:420px){ .hint{padding:10px 8px;gap:6px;font-size:13px} .brand h1{font-size:24px} }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="cat" viewBox="0 0 24 24">
+      <path fill="var(--cat)" d="M4.2 9.6 4.6 3.2c.05-.7.85-1 1.36-.53l3.6 3.4c1.6-.5 3.3-.5 4.9 0l3.6-3.4c.5-.47 1.3-.17 1.36.53l.4 6.4c.9 1.3 1.4 2.8 1.4 4.4 0 4.3-4 7.2-9.2 7.2S2.8 18.3 2.8 14c0-1.6.5-3.1 1.4-4.4z"/>
+      <ellipse fill="var(--cat-eye)" cx="8.6" cy="13.4" rx="1.25" ry="1.6"/>
+      <ellipse fill="var(--cat-eye)" cx="15.4" cy="13.4" rx="1.25" ry="1.6"/>
+      <path fill="var(--cat-eye)" d="M11.1 16.3h1.8c.3 0 .45.35.25.57l-.9.85a.35.35 0 0 1-.5 0l-.9-.85c-.2-.22-.05-.57.25-.57z"/>
+    </symbol>
+    <symbol id="x" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></symbol>
+    <symbol id="heart" viewBox="0 0 24 24"><path d="M12 21s-7.6-4.7-9.6-9.4C.9 8 3.4 4.2 7.1 4.2c2 0 3.7 1.1 4.9 3 1.2-1.9 2.9-3 4.9-3 3.7 0 6.2 3.8 4.7 7.4C19.6 16.3 12 21 12 21z"/></symbol>
+  </defs>
+</svg>
 <div class="wrap">
   <header>
-    <h1>🐾 냥도쿠</h1>
-    <div class="row">
-      <select id="size" aria-label="판 크기">
-        <option value="5">5×5</option><option value="6">6×6</option><option value="7" selected>7×7</option>
-        <option value="8">8×8</option><option value="9">9×9</option><option value="10">10×10</option>
-      </select>
-      <button class="primary" id="newBtn">새 게임</button>
+    <div class="brand">
+      <h1><svg aria-hidden="true"><use href="#cat"/></svg>냥도쿠</h1>
+      <p>색깔 구역에 숨은 고양이 찾기</p>
     </div>
+    <button class="primary" id="newBtn"><svg class="i" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.34 5.66"/><path d="M20 4v7h-7"/></svg>새 게임</button>
   </header>
-  <div class="stats">
-    <span class="lives" id="lives" aria-label="생명"></span>
-    <span>찾은 고양이 <b id="found">0</b>/<b id="total">7</b></span>
-    <span>⏱ <b id="time">00:00</b></span>
+
+  <div class="seg" id="seg" role="tablist" aria-label="판 크기"></div>
+
+  <div class="status">
+    <div class="lives" id="lives" aria-label="생명"></div>
+    <div class="count"><svg aria-hidden="true"><use href="#cat"/></svg><span id="found">0</span><span class="of">/ <span id="total">7</span></span></div>
+    <div class="timer"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg><span id="time">00:00</span></div>
   </div>
+
   <div class="msg" id="msg" aria-live="polite"></div>
+
   <div class="boardwrap"><div class="board" id="board" role="grid" aria-label="퍼즐 판"></div><div class="fx" id="fx"></div></div>
+
   <div class="label">힌트</div>
-  <div class="bar hints">
-    <button id="hCat">🐱 고양이 위치<small>사용 <span id="uCat">0</span>번</small></button>
-    <button id="hNo">✕ 없는 위치<small>사용 <span id="uNo">0</span>번</small></button>
-    <button id="hInfo">💡 정보 하나<small>사용 <span id="uInfo">0</span>번</small></button>
+  <div class="hints">
+    <button class="hint" id="hCat" title="아직 못 찾은 고양이 한 마리를 놓아 줘요"><svg class="cat" aria-hidden="true"><use href="#cat"/></svg><span class="l">고양이 위치</span><span class="badge" id="uCat">0</span></button>
+    <button class="hint" id="hNo" title="고양이가 없는 칸 하나를 확정해 줘요"><svg class="i" viewBox="0 0 24 24"><use href="#x"/></svg><span class="l">없는 위치</span><span class="badge" id="uNo">0</span></button>
+    <button class="hint" id="hInfo" title="지금 판에서 알 수 있는 사실 하나를 알려 줘요"><svg class="i" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.2 1.1 2V16h5v-.2c0-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg><span class="l">정보 하나</span><span class="badge" id="uInfo">0</span></button>
   </div>
-  <div class="bar tools">
-    <button id="undoBtn">↩️ 되돌리기<small>✕ 메모만 (Z)</small></button>
-    <button id="clearBtn">🧹 ✕ 모두 지우기<small>내 메모만</small></button>
-    <button id="modeBtn">🐾 찾기 모드<small>좌클릭도 찾기</small></button>
+
+  <div class="tools">
+    <button class="tool" id="undoBtn"><svg class="i" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>되돌리기 <kbd>Z</kbd></button>
+    <button class="tool" id="clearBtn"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>메모 지우기</button>
+    <button class="tool" id="modeBtn" title="켜면 좌클릭도 고양이 찾기가 돼요"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg>찾기 모드</button>
   </div>
-  <div class="opts">
-    <label><input type="checkbox" id="autoX"> 찾은 고양이 때문에 고양이가 못 오는 칸에 점 표시</label>
-  </div>
-  <div class="help">
-    <b>규칙</b> · N×N 판에 고양이 N마리가 숨어 있어요. ① 색깔 구역마다 1마리 ② 가로줄·세로줄마다 1마리 ③ 고양이끼리는 대각선 포함 주변 8칸에 붙어 있지 않아요.<br>
-    <b>조작</b> · 💡 정보 힌트는 <b>적용하기</b>(A 키)로 바로 판에 반영할 수 있어요 · <b>좌클릭</b> ✕ 메모 켜기/끄기 (드래그로 여러 칸) · <b>우클릭 또는 더블클릭</b> 고양이 찾기. 틀리면 생명 ❤️ 하나가 줄고, 3개를 다 잃으면 끝나요.
-  </div>
+
+  <label class="switch"><input type="checkbox" id="autoX"> 찾은 고양이 때문에 고양이가 못 오는 칸에 점 표시</label>
+
+  <details id="rules">
+    <summary>규칙과 조작</summary>
+    <ul>
+      <li>N×N 판에 고양이 <b>N마리</b>가 숨어 있어요.</li>
+      <li><b>색깔 구역</b>마다, <b>가로줄·세로줄</b>마다 고양이는 딱 1마리예요.</li>
+      <li>고양이끼리는 대각선을 포함해 <b>주변 8칸에 붙어 있지 않아요</b>.</li>
+      <li><b>좌클릭</b>: ✕ 메모 켜기/끄기 (드래그로 여러 칸)</li>
+      <li><b>우클릭 · 더블클릭</b>: 고양이 찾기. 틀리면 생명이 하나 줄고, 그 칸에 빨간 ✕가 남아요.</li>
+      <li>정보 힌트는 <b>적용하기</b> 버튼(또는 A 키)으로 바로 판에 반영할 수 있어요.</li>
+    </ul>
+  </details>
 </div>
-<div class="overlay" id="ov"><div class="modal">
-  <div class="big" id="ovIcon">😻</div>
+
+<div class="overlay" id="ov"><div class="modal" role="dialog" aria-labelledby="ovTitle">
+  <div class="big"><svg aria-hidden="true"><use href="#cat"/></svg></div>
   <h2 id="ovTitle">고양이를 다 찾았어요!</h2>
-  <div id="ovText"></div>
+  <p id="ovText"></p>
+  <div class="stats" id="ovStats"></div>
   <div class="row">
     <button class="ghostbtn" id="retryBtn">같은 판 다시</button>
     <button class="primary" id="ovBtn">새 게임</button>
@@ -179,7 +268,9 @@ select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
 const $=id=>document.getElementById(id);
 const EMPTY=0,X=1,CAT=2,NO=3; // X: 내 메모(틀릴 수 있음), NO: 확정된 "고양이 없음"
 const LIVES=3;
-const COLOR_NAMES=['빨간','노란','연두','하늘색','보라','분홍','민트','베이지','회색','주황'];
+const COLOR_NAMES=['빨간','노란','초록','파란','보라','분홍','민트','베이지','회색','주황'];
+const SVG_CAT='<svg class="m cat"><use href="#cat"/></svg>';
+const svgX=cls=>`<svg class="m x${cls?' '+cls:''}" viewBox="0 0 24 24"><use href="#x"/></svg>`;
 let S,drag=null,focus=null,flashCell=-1,foundCell=-1,lostHeart=-1,findMode=false,lastClick=null;
 
 // ================= 퍼즐 생성 =================
@@ -276,12 +367,12 @@ function newGame(n){
 function reset(){ // 같은 판 처음부터
   const n=S.n;
   S.mark=Array(n*n).fill(EMPTY);if(S.given>=0)S.mark[S.given]=CAT;
-  S.hist=[];S.lives=LIVES;S.use={cat:0,no:0,info:0};S.time=0;S.done=false;S.lost=false;
+  S.hist=[];S.miss=[];S.lives=LIVES;S.use={cat:0,no:0,info:0};S.time=0;S.done=false;S.lost=false;
   focus=null;lastClick=null;board.classList.remove('dead');build();save();render();
   say(S.given>=0?'이 판은 정보가 부족해서 고양이 한 마리를 먼저 알려 줬어요. ("처음" 표시)':'');
 }
 function save(){try{localStorage.setItem('nyang3',JSON.stringify(S))}catch(e){}}
-function load(){try{const s=JSON.parse(localStorage.getItem('nyang3'));if(s&&s.reg&&!s.done){S=s;return true}}catch(e){}return false}
+function load(){try{const s=JSON.parse(localStorage.getItem('nyang3'));if(s&&s.reg&&!s.done){S=s;S.miss=S.miss||[];return true}}catch(e){}return false}
 
 const isCatCell=i=>S.sol[i/S.n|0]===i%S.n;
 const near=(a,b,n)=>Math.abs((a/n|0)-(b/n|0))<=1&&Math.abs(a%n-b%n)<=1;
@@ -311,73 +402,77 @@ function guess(i){ // 우클릭·더블클릭: 고양이 찾기
   focus=null;
   if(isCatCell(i)){
     S.mark[i]=CAT;foundCell=i;
-    say(['찾았어요! 🐱','냐옹~ 여기 있었네요!','정답! 🐾','고양이 발견!'][rnd(4)]);
+    say(['찾았어요!','여기 있었네요, 냐옹.','정답이에요.','고양이 발견!'][rnd(4)]);
     fxFound(i);checkWin();
   }else{
-    S.mark[i]=NO;S.lives--;flashCell=i;lostHeart=S.lives;
+    S.mark[i]=NO;S.miss.push(i);S.lives--;flashCell=i;lostHeart=S.lives;
     fxWrong(i);
     if(S.lives>0)say(`여기엔 고양이가 없어요. 생명이 하나 줄었어요. (남은 생명 ${S.lives})`,true);
     else lose();
   }
   save();render();
 }
+function showResult(win){
+  const u=S.use,hints=u.cat+u.no+u.info;
+  $('ovTitle').textContent=win?'고양이를 다 찾았어요!':'생명을 다 썼어요';
+  $('ovText').textContent=win?(hints?`${S.n}×${S.n} 판을 풀었어요.`:`${S.n}×${S.n} 판을 힌트 없이 풀었어요!`)
+                             :'숨은 고양이 위치를 판에 흐리게 보여 줄게요.';
+  $('ovStats').innerHTML=win?`<div><b>${fmt(S.time)}</b><span>기록</span></div><div><b>${S.lives}/${LIVES}</b><span>남은 생명</span></div><div><b>${hints}</b><span>힌트</span></div>`:'';
+  $('ovStats').hidden=!win;
+}
 function checkWin(){
   if(!S.sol.every((c,r)=>S.mark[r*S.n+c]===CAT))return;
-  S.done=true;save();
-  const u=S.use,hints=u.cat+u.no+u.info;
-  $('ovIcon').textContent='😻';$('ovTitle').textContent='고양이를 다 찾았어요!';
-  $('ovText').textContent=`${S.n}×${S.n} · ${fmt(S.time)} · 남은 생명 ${'❤️'.repeat(S.lives)}`+
-    (hints?` · 힌트 ${hints}번`:' · 힌트 없이 성공!');
-  // 고양이들이 줄 순서대로 폴짝 뛰고 축하 파티클
+  S.done=true;save();showResult(true);
+  // 고양이들이 줄 순서대로 폴짝 뛰고 색종이
   S.sol.forEach((c,r)=>setTimeout(()=>{
-    const d=board.children[r*S.n+c];if(!d)return;
+    const i=r*S.n+c,d=board.children[i];if(!d)return;
     d.classList.remove('dance');void d.offsetWidth;d.classList.add('dance');
-    burst(r*S.n+c,['🎉','💖','🐾','✨'],6,70);
+    confetti(i,10,70);
   },500+r*110));
   setTimeout(()=>$('ov').classList.add('show'),900+S.n*110);
 }
 function lose(){
-  S.done=true;S.lost=true;save();
+  S.done=true;S.lost=true;save();showResult(false);
   board.classList.add('dead');
-  $('ovIcon').textContent='😿';$('ovTitle').textContent='생명을 다 썼어요';
-  $('ovText').textContent='숨은 고양이 위치를 판에 흐리게 보여 줄게요.';
   setTimeout(()=>$('ov').classList.add('show'),1100);
 }
 
 // ================= 효과 =================
 const fx=$('fx');
 const reduce=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-function cellCenter(i){
+function cellBox(i){
   const d=board.children[i],a=d.getBoundingClientRect(),b=fx.getBoundingClientRect();
   return{x:a.left-b.left+a.width/2,y:a.top-b.top+a.height/2,w:a.width,h:a.height,l:a.left-b.left,t:a.top-b.top};
 }
 function addFx(el,ms){fx.appendChild(el);setTimeout(()=>el.remove(),ms)}
-function burst(i,emojis,count,dist){
-  if(reduce())return;const c=cellCenter(i);
+function particles(i,colors,count,dist,sq){
+  if(reduce())return;const c=cellBox(i);
   for(let k=0;k<count;k++){
     const p=document.createElement('span');p.className='p';
-    const ang=Math.PI*2*k/count+Math.random()*.6,r=dist*(.6+Math.random()*.6);
-    p.textContent=emojis[rnd(emojis.length)];
-    p.style.cssText=`left:${c.x}px;top:${c.y}px;font-size:${Math.max(12,c.w*.38)}px;--dx:${Math.cos(ang)*r}px;--dy:${Math.sin(ang)*r}px;--rot:${rnd(80)-40}deg;--t:${.7+Math.random()*.4}s`;
-    addFx(p,1200);
+    const ang=Math.PI*2*k/count+Math.random()*.7,r=dist*(.55+Math.random()*.6);
+    const s=4+Math.random()*5,isSq=sq&&Math.random()<.5;
+    p.style.cssText=`left:${c.x}px;top:${c.y}px;--c:${colors[rnd(colors.length)]};--s:${s}px;--br:${isSq?'1.5px':'50%'};`+
+      `--dx:${Math.cos(ang)*r}px;--dy:${Math.sin(ang)*r}px;--rot:${rnd(360)}deg;--t:${.6+Math.random()*.4}s`;
+    addFx(p,1100);
   }
 }
+const confetti=(i,n,d)=>particles(i,['var(--gold)','var(--accent)','var(--heart)','var(--r2)','var(--r3)','var(--r4)'],n,d,true);
 function ring(i,color){
-  if(reduce())return;const c=cellCenter(i),e=document.createElement('div');e.className='ring';
+  if(reduce())return;const c=cellBox(i),e=document.createElement('div');e.className='ring';
   e.style.cssText=`left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.w}px;${color?`--ring:${color}`:''}`;
   addFx(e,700);
 }
 function fxFound(i){
-  ring(i,'#ffc94a');setTimeout(()=>ring(i),120);
-  burst(i,['💛','🐾','✨','💕'],8,Math.max(40,cellCenter(i).w*1.2));
+  ring(i);setTimeout(()=>ring(i,'var(--accent)'),120);
+  particles(i,['var(--gold)','var(--accent)','var(--cat)'],10,Math.max(36,cellBox(i).w*1.1));
 }
 function fxWrong(i){
-  if(reduce())return;const c=cellCenter(i);
+  if(reduce())return;const c=cellBox(i);
   const f=document.createElement('div');f.className='flash';
   f.style.cssText=`left:${c.l}px;top:${c.t}px;width:${c.w}px;height:${c.h}px`;addFx(f,600);
-  const t=document.createElement('div');t.className='txt';t.textContent='-1 ❤️';
-  t.style.cssText=`left:${c.x}px;top:${c.y-c.h*.3}px`;addFx(t,1100);
-  burst(i,['😾','💢'],3,Math.max(30,c.w*.8));
+  const t=document.createElement('div');t.className='txt';t.textContent='−1';
+  t.style.cssText=`left:${c.x}px;top:${c.y-c.h*.25}px`;addFx(t,1100);
+  particles(i,['var(--bad)'],6,Math.max(26,c.w*.7));
   board.classList.remove('hit');void board.offsetWidth;board.classList.add('hit');
 }
 
@@ -392,7 +487,6 @@ function hintCat(){
 function hintNo(){
   if(S.done)return;const n=S.n;
   const blk=new Set();S.mark.forEach((m,i)=>{if(m===CAT)blockedBy(i).forEach(j=>blk.add(j))});
-  // 아직 확정 안 됐고, 찾은 고양이로 바로 알 수 없는 칸을 우선
   let pool=[];for(let i=0;i<n*n;i++)if(!isCatCell(i)&&S.mark[i]!==NO&&!blk.has(i))pool.push(i);
   if(!pool.length)for(let i=0;i<n*n;i++)if(!isCatCell(i)&&S.mark[i]!==NO)pool.push(i);
   if(!pool.length)return;
@@ -405,9 +499,9 @@ function hintInfo(){
   const f=analyze();
   if(!f){say('지금 표시만으로 바로 알 수 있는 게 없어요. 다른 힌트를 써 보세요.');return}
   S.use.info++;focus={unit:new Set(f.unit),target:new Set(f.target),apply:f};
-  say('💡 '+f.msg);
+  say(f.msg);$('msg').classList.add('info');
   const b=document.createElement('button');b.className='apply';b.id='applyBtn';
-  b.textContent=f.kind==='cat'?'🐱 적용하기':'✕ 적용하기';
+  b.innerHTML=(f.kind==='cat'?'<svg aria-hidden="true"><use href="#cat"/></svg>':'<svg class="i" viewBox="0 0 24 24" style="stroke-width:3"><use href="#x"/></svg>')+'적용하기';
   b.title=f.kind==='cat'?'이 칸에 고양이를 놓아요':'깜빡이는 칸을 모두 "고양이 없음"으로 확정해요';
   b.onclick=applyInfo;$('msg').appendChild(b);
   save();render();
@@ -420,7 +514,7 @@ function applyInfo(){ // 정보 힌트 내용을 판에 반영
     say('적용했어요. 고양이를 놓았어요.');checkWin();
   }else{
     const t=f.target.filter(i=>S.mark[i]!==NO&&S.mark[i]!==CAT);
-    t.forEach((i,k)=>{S.mark[i]=NO;setTimeout(()=>ring(i,'#8c7d74'),k*40)});
+    t.forEach((i,k)=>{S.mark[i]=NO;setTimeout(()=>ring(i,'var(--muted)'),k*40)});
     say(`적용했어요. ${t.length}칸을 "고양이 없음"으로 표시했어요.`);
   }
   save();render();
@@ -481,36 +575,42 @@ function analyze(){
   return null;
 }
 
-function say(t,warn=false){const m=$('msg');m.textContent='';const s=document.createElement('span');s.textContent=t;m.appendChild(s);m.classList.toggle('warn',warn)}
+function say(t,warn=false){
+  const m=$('msg');m.textContent='';m.className='msg'+(warn?' warn':'');
+  if(t){const s=document.createElement('span');s.className='t';s.textContent=t;m.appendChild(s)}
+}
 const fmt=t=>String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
 
 // ================= 화면 =================
 const board=$('board');
+const seg=$('seg');
+for(let n=5;n<=10;n++){const b=document.createElement('button');b.textContent=`${n}×${n}`;b.dataset.n=n;b.setAttribute('role','tab');
+  b.onclick=()=>newGame(n);seg.appendChild(b)}
 function build(){
   const n=S.n;board.innerHTML='';
   board.style.gridTemplateColumns=`repeat(${n},minmax(0,1fr))`;
   board.style.gridTemplateRows=`repeat(${n},minmax(0,1fr))`;
-  const fs=Math.min(40,Math.max(14,300/n));
   for(let i=0;i<n*n;i++){
     const d=document.createElement('div'),r=i/n|0,c=i%n;
     d.className='cell'+(r&&S.reg[i]!==S.reg[i-n]?' bt':'')+(c&&S.reg[i]!==S.reg[i-1]?' bl':'')+(i===S.given?' start':'');
     d.style.background=`var(--r${S.reg[i]})`;
-    d.style.fontSize=`clamp(12px,${fs/5.4}vw,${fs}px)`;
     d.dataset.i=i;d.setAttribute('role','gridcell');
     board.appendChild(d);
   }
-  $('total').textContent=n;$('size').value=n;
+  $('total').textContent=n;
+  [...seg.children].forEach(b=>{const on=+b.dataset.n===n;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
 }
 function render(){
   const blk=new Set();
   if($('autoX').checked)S.mark.forEach((m,i)=>{if(m===CAT)blockedBy(i).forEach(j=>blk.add(j))});
   board.classList.toggle('focus',!!focus);
-  if(!(focus&&focus.apply)){const b=$('applyBtn');if(b)b.remove()}
+  if(!(focus&&focus.apply)){const b=$('applyBtn');if(b){b.remove();$('msg').classList.remove('info')}}
+  const miss=new Set(S.miss);
   [...board.children].forEach((d,i)=>{
     const m=S.mark[i];
-    const html=m===CAT?'<span class="m cat">🐱</span>':m===NO?'<span class="m no">✕</span>':m===X?'<span class="m x">✕</span>'
-      :S.lost&&isCatCell(i)?'<span class="m ghost">🐱</span>':blk.has(i)?'<span class="m dot"></span>':'';
-    if(d.innerHTML!==html)d.innerHTML=html;
+    const html=m===CAT?SVG_CAT:(m===NO||m===X)?svgX(miss.has(i)?'miss':'')
+      :S.lost&&isCatCell(i)?SVG_CAT.replace('m cat','m cat ghost'):blk.has(i)?'<span class="m dot"></span>':'';
+    if(d.dataset.h!==html){d.innerHTML=html;d.dataset.h=html}
     d.classList.toggle('hu',!!focus&&focus.unit.has(i));
     d.classList.toggle('ht',!!focus&&focus.target.has(i));
     if(i===flashCell||i===foundCell){const c=i===flashCell?'wrong':'found';d.classList.remove(c);void d.offsetWidth;d.classList.add(c);
@@ -518,7 +618,7 @@ function render(){
     d.setAttribute('aria-label',m===CAT?'고양이':m===NO?'고양이 없음':m===X?'메모 엑스':'빈칸');
   });
   flashCell=foundCell=-1;
-  $('lives').innerHTML=[...Array(LIVES)].map((_,k)=>`<span class="${k===lostHeart?'breaking':k<S.lives?'':'gone'}">❤️</span>`).join('');
+  $('lives').innerHTML=[...Array(LIVES)].map((_,k)=>`<svg class="${k===lostHeart?'breaking':k<S.lives?'':'gone'}" viewBox="0 0 24 24"><use href="#heart"/></svg>`).join('');
   lostHeart=-1;
   $('found').textContent=S.mark.filter(m=>m===CAT).length;
   $('time').textContent=fmt(S.time);
@@ -546,8 +646,7 @@ board.addEventListener('pointermove',e=>{
   if(!drag)return;const d=cellAt(e);if(!d)return;const i=+d.dataset.i;
   if(drag.cells.has(i))return;
   drag.moved=true;drag.cells.add(i);
-  for(const j of drag.cells)if(S.mark[j]===EMPTY||S.mark[j]===X)
-    board.children[j].innerHTML=drag.val===X?'<span class="m x">✕</span>':'';
+  for(const j of drag.cells)if(S.mark[j]===EMPTY||S.mark[j]===X){const el=board.children[j];el.innerHTML=drag.val===X?svgX(''):'';el.dataset.h=''}
 });
 board.addEventListener('pointerup',()=>{
   if(!drag)return;const g=drag;drag=null;
@@ -557,15 +656,16 @@ board.addEventListener('pointerup',()=>{
 });
 board.addEventListener('pointercancel',()=>{drag=null;render()});
 
-$('newBtn').onclick=()=>newGame(+$('size').value);
-$('size').onchange=()=>newGame(+$('size').value);
+$('newBtn').onclick=()=>newGame(S.n);
 $('undoBtn').onclick=undo;
 $('clearBtn').onclick=()=>{if(!S.done)setX(S.mark.map((m,i)=>[i,EMPTY]))};
 $('modeBtn').onclick=()=>{findMode=!findMode;render()};
 $('hCat').onclick=hintCat;$('hNo').onclick=hintNo;$('hInfo').onclick=hintInfo;
 try{const v=localStorage.getItem('nyang-autoX');if(v!==null)$('autoX').checked=v==='1'}catch(e){}
 $('autoX').onchange=e=>{try{localStorage.setItem('nyang-autoX',e.target.checked?'1':'0')}catch(_){}render()};
-$('ovBtn').onclick=()=>{$('ov').classList.remove('show');newGame(+$('size').value)};
+try{if(localStorage.getItem('nyang-rules')==='0')$('rules').open=false;else $('rules').open=!localStorage.getItem('nyang-rules')}catch(e){}
+$('rules').addEventListener('toggle',()=>{try{localStorage.setItem('nyang-rules',$('rules').open?'1':'0')}catch(_){}});
+$('ovBtn').onclick=()=>{$('ov').classList.remove('show');newGame(S.n)};
 $('retryBtn').onclick=()=>{$('ov').classList.remove('show');reset()};
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT')return;

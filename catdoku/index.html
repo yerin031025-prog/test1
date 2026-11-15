@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>냥도쿠</title>
+<style>
+:root{
+  --bg:#fff7ef; --panel:#ffffff; --ink:#3b2f2a; --muted:#9a8a80;
+  --line:#e6d6c8; --thick:#7a5c4a; --given:#3b2f2a; --user:#d2691e;
+  --sel:#ffd9a8; --peer:#fff0de; --same:#ffe6c4; --err:#ffd0d0; --errink:#c0392b;
+  --btn:#f6e7d8; --btnh:#efd6bf; --accent:#e07b39;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1f1a17; --panel:#2a2320; --ink:#f3e9e1; --muted:#a8968a;
+    --line:#4a3d36; --thick:#c9a58c; --given:#f3e9e1; --user:#ffab6b;
+    --sel:#6b4a2e; --peer:#352b26; --same:#4d3a2b; --err:#5a2a2a; --errink:#ff8a80;
+    --btn:#3a2f2a; --btnh:#4a3c35; --accent:#ff9a55;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1f1a17; --panel:#2a2320; --ink:#f3e9e1; --muted:#a8968a;
+  --line:#4a3d36; --thick:#c9a58c; --given:#f3e9e1; --user:#ffab6b;
+  --sel:#6b4a2e; --peer:#352b26; --same:#4d3a2b; --err:#5a2a2a; --errink:#ff8a80;
+  --btn:#3a2f2a; --btnh:#4a3c35; --accent:#ff9a55;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  display:flex;justify-content:center;padding:16px;min-height:100vh}
+.wrap{width:100%;max-width:520px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+h1{font-size:26px;margin:0}
+.stats{display:flex;gap:14px;font-size:14px;color:var(--muted);margin-bottom:10px;justify-content:space-between;flex-wrap:wrap}
+.stats b{color:var(--ink)}
+select,button{font:inherit;color:var(--ink)}
+select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
+.board{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(9,minmax(0,1fr));aspect-ratio:1;background:var(--panel);
+  border:3px solid var(--thick);border-radius:10px;overflow:hidden;user-select:none}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer;
+  font-size:clamp(18px,6vw,32px);line-height:1}
+.cell:nth-child(9n){border-right:none}
+.cell.c2,.cell.c5{border-right:2px solid var(--thick)}
+.cell.r2,.cell.r5{border-bottom:2px solid var(--thick)}
+.cell.r8{border-bottom:none}
+.cell.peer{background:var(--peer)}
+.cell.same{background:var(--same)}
+.cell.sel{background:var(--sel)}
+.cell.err{background:var(--err)}
+.cell.given{color:var(--given);font-weight:700}
+.cell.user{color:var(--user)}
+.cell.err .v{color:var(--errink)}
+.cell.pop .v{animation:pop .25s}
+@keyframes pop{50%{transform:scale(1.3)}}
+.notes{position:absolute;inset:2px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  font-size:clamp(7px,2.1vw,12px);color:var(--muted)}
+.notes span{display:flex;align-items:center;justify-content:center}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.tools button,.pad button{background:var(--btn);border:none;border-radius:10px;padding:10px 4px;cursor:pointer}
+.tools button:hover,.pad button:hover{background:var(--btnh)}
+.tools button.on{background:var(--accent);color:#fff}
+.tools small{display:block;font-size:11px;color:inherit;opacity:.75}
+.pad{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
+.pad button{font-size:clamp(18px,5.5vw,28px);padding:8px 0;position:relative}
+.pad button .n{display:block;font-size:11px;color:var(--muted)}
+.pad button.done{opacity:.3}
+.row{display:flex;gap:8px;align-items:center}
+.help{font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.show{display:flex}
+.modal{background:var(--panel);border-radius:16px;padding:24px;text-align:center;max-width:340px;width:100%}
+.modal .big{font-size:56px}
+.modal button{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 18px;margin-top:12px;cursor:pointer;font-size:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🐾 냥도쿠</h1>
+    <div class="row">
+      <select id="diff" aria-label="난이도">
+        <option value="easy">쉬움</option>
+        <option value="medium" selected>보통</option>
+        <option value="hard">어려움</option>
+        <option value="expert">전문가</option>
+      </select>
+      <button id="newBtn" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer">새 게임</button>
+    </div>
+  </header>
+  <div class="stats">
+    <span>⏱ <b id="time">00:00</b></span>
+    <span>실수 <b id="mist">0</b>/3</span>
+    <span>힌트 <b id="hintsLeft">3</b></span>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="tools">
+    <button id="undoBtn">↩️<small>되돌리기 (Z)</small></button>
+    <button id="eraseBtn">🧽<small>지우기 (Del)</small></button>
+    <button id="noteBtn">✏️<small>메모 (N)</small></button>
+    <button id="hintBtn">💡<small>힌트 (H)</small></button>
+  </div>
+  <div class="pad" id="pad"></div>
+  <div class="row" style="margin-top:12px;justify-content:space-between">
+    <label style="font-size:14px"><input type="checkbox" id="numMode"> 숫자로 보기 (M)</label>
+  </div>
+  <div class="help">
+    규칙: 가로줄, 세로줄, 3×3 칸마다 고양이 9마리가 한 번씩만 들어가야 해요.<br>
+    조작: 마우스로 칸 선택 · 방향키 이동 · 1~9 입력 · N 메모 · H 힌트 · Z 되돌리기 · 실수 3번이면 게임 오버.
+  </div>
+</div>
+<div class="overlay" id="ov"><div class="modal">
+  <div class="big" id="ovIcon">😻</div>
+  <h2 id="ovTitle">완성!</h2>
+  <div id="ovText"></div>
+  <button id="ovBtn">새 게임</button>
+</div></div>
+
+<script>
+const CATS=['😺','😸','😹','😻','😼','😽','🙀','😿','😾'];
+const CLUES={easy:40,medium:32,hard:27,expert:23};
+const $=id=>document.getElementById(id);
+let S; // state
+let numMode=false;
+try{numMode=localStorage.getItem('nyang-num')==='1'}catch(e){}
+$('numMode').checked=numMode;
+
+const sym=v=>numMode?String(v):CATS[v-1];
+
+// ---------- generator ----------
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function canPlace(g,i,v){
+  const r=i/9|0,c=i%9,br=r-r%3,bc=c-c%3;
+  for(let k=0;k<9;k++){
+    if(g[r*9+k]===v||g[k*9+c]===v)return false;
+    if(g[(br+(k/3|0))*9+bc+k%3]===v)return false;
+  }
+  return true;
+}
+function fill(g){
+  const i=g.indexOf(0); if(i<0)return true;
+  for(const v of shuffle([1,2,3,4,5,6,7,8,9])){
+    if(canPlace(g,i,v)){g[i]=v;if(fill(g))return true;g[i]=0}
+  }
+  return false;
+}
+function countSol(g,limit=2){
+  let best=-1,bestCnt=10;
+  for(let i=0;i<81;i++)if(!g[i]){
+    let n=0;for(let v=1;v<=9;v++)if(canPlace(g,i,v))n++;
+    if(n<bestCnt){bestCnt=n;best=i;if(n<=1)break}
+  }
+  if(best<0)return 1;
+  let total=0;
+  for(let v=1;v<=9;v++)if(canPlace(g,best,v)){
+    g[best]=v;total+=countSol(g,limit-total);g[best]=0;
+    if(total>=limit)break;
+  }
+  return total;
+}
+function generate(diff){
+  const sol=Array(81).fill(0);fill(sol);
+  const puz=sol.slice();
+  const target=CLUES[diff];let clues=81;
+  for(const i of shuffle([...Array(81).keys()])){
+    if(clues<=target)break;
+    const bak=puz[i];puz[i]=0;
+    if(countSol(puz.slice())!==1)puz[i]=bak;else clues--;
+  }
+  return{sol,puz};
+}
+
+// ---------- game ----------
+function newGame(diff){
+  const {sol,puz}=generate(diff);
+  S={diff,sol,given:puz.map(v=>v>0),val:puz.slice(),notes:Array.from({length:81},()=>[]),
+     sel:-1,note:false,mist:0,hints:3,time:0,history:[],over:false};
+  save();render();
+}
+function save(){try{localStorage.setItem('nyang-state',JSON.stringify(S))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem('nyang-state'));if(s&&s.sol&&!s.over){S=s;return true}}catch(e){}return false}
+
+function peers(i){const r=i/9|0,c=i%9,b=(r/3|0)*3+(c/3|0);
+  return j=>{const r2=j/9|0,c2=j%9;return r2===r||c2===c||((r2/3|0)*3+(c2/3|0))===b}}
+
+function pushHist(i){S.history.push({i,v:S.val[i],n:S.notes[i].slice()});if(S.history.length>200)S.history.shift()}
+
+function input(v){
+  const i=S.sel; if(S.over||i<0||S.given[i])return;
+  if(S.val[i]&&S.val[i]===S.sol[i])return; // already correct
+  pushHist(i);
+  if(S.note){
+    if(S.val[i])return;
+    const n=S.notes[i],k=n.indexOf(v);k<0?n.push(v):n.splice(k,1);
+  }else{
+    S.val[i]=v;S.notes[i]=[];
+    if(v!==S.sol[i]){S.mist++;if(S.mist>=3)end(false)}
+    else{ // clear this value from peer notes
+      const p=peers(i);for(let j=0;j<81;j++)if(p(j)){const k=S.notes[j].indexOf(v);if(k>=0)S.notes[j].splice(k,1)}
+      flash=i;
+      if(S.val.every((x,j)=>x===S.sol[j]))end(true);
+    }
+  }
+  save();render();
+}
+function erase(){const i=S.sel;if(S.over||i<0||S.given[i])return;if(S.val[i]===S.sol[i])return;
+  pushHist(i);S.val[i]=0;S.notes[i]=[];save();render()}
+function undo(){if(S.over)return;const h=S.history.pop();if(!h)return;S.val[h.i]=h.v;S.notes[h.i]=h.n;S.sel=h.i;save();render()}
+function hint(){
+  if(S.over||S.hints<=0)return;
+  let i=S.sel;
+  if(i<0||S.val[i]===S.sol[i]){const empty=[];for(let j=0;j<81;j++)if(S.val[j]!==S.sol[j])empty.push(j);if(!empty.length)return;i=empty[Math.random()*empty.length|0]}
+  S.hints--;S.sel=i;const keep=S.note;S.note=false;
+  const m=S.mist; input(S.sol[i]); S.mist=m; S.note=keep; save();render();
+}
+function end(win){
+  S.over=true;save();
+  $('ovIcon').textContent=win?'😻':'😿';
+  $('ovTitle').textContent=win?'완성했어요!':'게임 오버';
+  $('ovText').textContent=win?`기록 ${fmt(S.time)} · 실수 ${S.mist}번`:'실수를 3번 했어요. 다시 도전해 볼까요?';
+  $('ov').classList.add('show');
+}
+const fmt=t=>String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+
+// ---------- render ----------
+let flash=-1;
+const board=$('board'),pad=$('pad');
+for(let i=0;i<81;i++){const d=document.createElement('div');d.className='cell';d.onclick=()=>{S.sel=i;render()};board.appendChild(d)}
+for(let v=1;v<=9;v++){const b=document.createElement('button');b.onclick=()=>input(v);pad.appendChild(b)}
+
+function render(){
+  const sel=S.sel,p=sel>=0?peers(sel):()=>false,sv=sel>=0?S.val[sel]:0;
+  const counts=Array(10).fill(0);S.val.forEach((v,j)=>{if(v&&v===S.sol[j])counts[v]++});
+  [...board.children].forEach((d,i)=>{
+    const r=i/9|0,c=i%9,v=S.val[i];
+    let cls='cell r'+r+' c'+c;
+    if(S.given[i])cls+=' given';else if(v)cls+=' user';
+    if(v&&v!==S.sol[i])cls+=' err';
+    else if(i===sel)cls+=' sel';
+    else if(sv&&v===sv)cls+=' same';
+    else if(p(i))cls+=' peer';
+    if(i===flash)cls+=' pop';
+    d.className=cls;
+    if(v)d.innerHTML=`<span class="v">${sym(v)}</span>`;
+    else if(S.notes[i].length)d.innerHTML='<div class="notes">'+[1,2,3,4,5,6,7,8,9].map(n=>`<span>${S.notes[i].includes(n)?sym(n):''}</span>`).join('')+'</div>';
+    else d.innerHTML='';
+  });
+  flash=-1;
+  [...pad.children].forEach((b,k)=>{const v=k+1;b.innerHTML=`${sym(v)}<span class="n">${numMode?'':v}</span>`;b.classList.toggle('done',counts[v]>=9)});
+  $('noteBtn').classList.toggle('on',S.note);
+  $('mist').textContent=S.mist;$('hintsLeft').textContent=S.hints;$('time').textContent=fmt(S.time);
+  $('diff').value=S.diff;
+}
+
+// ---------- events ----------
+$('newBtn').onclick=()=>newGame($('diff').value);
+$('diff').onchange=()=>newGame($('diff').value);
+$('undoBtn').onclick=undo;$('eraseBtn').onclick=erase;$('hintBtn').onclick=hint;
+$('noteBtn').onclick=()=>{S.note=!S.note;save();render()};
+$('numMode').onchange=e=>{numMode=e.target.checked;try{localStorage.setItem('nyang-num',numMode?'1':'0')}catch(_){}render()};
+$('ovBtn').onclick=()=>{$('ov').classList.remove('show');newGame($('diff').value)};
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='SELECT')return;
+  const k=e.key;
+  if(k>='1'&&k<='9'){input(+k);return}
+  const mv={ArrowUp:-9,ArrowDown:9,ArrowLeft:-1,ArrowRight:1}[k];
+  if(mv){e.preventDefault();let i=S.sel<0?40:S.sel;
+    if(mv===-1&&i%9===0)i+=8;else if(mv===1&&i%9===8)i-=8;else i=(i+mv+81)%81;S.sel=i;render();return}
+  if(k==='Backspace'||k==='Delete'||k==='0'){erase();return}
+  const l=k.toLowerCase();
+  if(l==='n'){S.note=!S.note;save();render()}
+  else if(l==='h')hint();
+  else if(l==='z'||(e.ctrlKey&&l==='z'))undo();
+  else if(l==='m'){$('numMode').click()}
+});
+setInterval(()=>{if(S&&!S.over&&!document.hidden){S.time++;$('time').textContent=fmt(S.time);if(S.time%5===0)save()}},1000);
+
+if(load())render();else newGame('medium');
+</script>
+</body>
+</html>

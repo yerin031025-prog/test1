@@ -48,6 +48,12 @@ select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
   padding:8px 12px;display:flex;align-items:center}
 .msg:empty::before{content:"좌클릭으로 ✕ 메모, 우클릭이나 더블클릭으로 고양이를 찾아요.";color:var(--muted)}
 .msg.warn{color:var(--bad);font-weight:600}
+.msg{gap:10px;justify-content:space-between}
+.msg .apply{flex:none;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600;
+  animation:applyIn .35s cubic-bezier(.3,1.5,.5,1)}
+.msg .apply:hover{filter:brightness(1.08)}
+.msg .apply:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@keyframes applyIn{from{transform:scale(.6);opacity:0}}
 .board{display:grid;aspect-ratio:1;max-width:100%;border:3px solid var(--wall);border-radius:8px;overflow:hidden;
   user-select:none;touch-action:none;background:var(--wall)}
 .cell{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -156,7 +162,7 @@ select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
   </div>
   <div class="help">
     <b>규칙</b> · N×N 판에 고양이 N마리가 숨어 있어요. ① 색깔 구역마다 1마리 ② 가로줄·세로줄마다 1마리 ③ 고양이끼리는 대각선 포함 주변 8칸에 붙어 있지 않아요.<br>
-    <b>조작</b> · <b>좌클릭</b> ✕ 메모 켜기/끄기 (드래그로 여러 칸) · <b>우클릭 또는 더블클릭</b> 고양이 찾기. 틀리면 생명 ❤️ 하나가 줄고, 3개를 다 잃으면 끝나요.
+    <b>조작</b> · 💡 정보 힌트는 <b>적용하기</b>(A 키)로 바로 판에 반영할 수 있어요 · <b>좌클릭</b> ✕ 메모 켜기/끄기 (드래그로 여러 칸) · <b>우클릭 또는 더블클릭</b> 고양이 찾기. 틀리면 생명 ❤️ 하나가 줄고, 3개를 다 잃으면 끝나요.
   </div>
 </div>
 <div class="overlay" id="ov"><div class="modal">
@@ -398,8 +404,26 @@ function hintInfo(){
   if(S.done)return;
   const f=analyze();
   if(!f){say('지금 표시만으로 바로 알 수 있는 게 없어요. 다른 힌트를 써 보세요.');return}
-  S.use.info++;focus={unit:new Set(f.unit),target:new Set(f.target)};
-  say('💡 '+f.msg);save();render();
+  S.use.info++;focus={unit:new Set(f.unit),target:new Set(f.target),apply:f};
+  say('💡 '+f.msg);
+  const b=document.createElement('button');b.className='apply';b.id='applyBtn';
+  b.textContent=f.kind==='cat'?'🐱 적용하기':'✕ 적용하기';
+  b.title=f.kind==='cat'?'이 칸에 고양이를 놓아요':'깜빡이는 칸을 모두 "고양이 없음"으로 확정해요';
+  b.onclick=applyInfo;$('msg').appendChild(b);
+  save();render();
+}
+function applyInfo(){ // 정보 힌트 내용을 판에 반영
+  if(S.done||!focus||!focus.apply)return;
+  const f=focus.apply;focus=null;
+  if(f.kind==='cat'){
+    const i=f.target[0];S.mark[i]=CAT;foundCell=i;fxFound(i);
+    say('적용했어요. 고양이를 놓았어요.');checkWin();
+  }else{
+    const t=f.target.filter(i=>S.mark[i]!==NO&&S.mark[i]!==CAT);
+    t.forEach((i,k)=>{S.mark[i]=NO;setTimeout(()=>ring(i,'#8c7d74'),k*40)});
+    say(`적용했어요. ${t.length}칸을 "고양이 없음"으로 표시했어요.`);
+  }
+  save();render();
 }
 
 // 지금 아는 것(찾은 고양이, 확정 ✕, 맞게 친 ✕ 메모)으로 추론 한 단계 찾기
@@ -417,7 +441,7 @@ function analyze(){
   // 1) 찾은 고양이 주변·같은 줄·같은 구역인데 아직 표시 안 한 칸
   if(!$('autoX').checked)for(const c of cats){
     const t=blockedBy(c).filter(j=>S.mark[j]===EMPTY);
-    if(t.length)return{msg:'이 고양이와 같은 가로줄·세로줄·구역이거나 바로 옆이라, 깜빡이는 칸에는 고양이가 없어요.',unit:[c],target:t};
+    if(t.length)return{msg:'이 고양이와 같은 가로줄·세로줄·구역이거나 바로 옆이라, 깜빡이는 칸에는 고양이가 없어요.',unit:[c],target:t,kind:"no"};
   }
   const knownNo=i=>S.mark[i]===NO||(S.mark[i]===X&&!isCatCell(i))||blk.has(i);
   const cand=i=>S.mark[i]!==CAT&&!knownNo(i);
@@ -426,7 +450,7 @@ function analyze(){
   // 2) 고양이가 올 수 있는 칸이 하나뿐인 줄/구역
   for(const t of ['reg','row','col'])for(const k of open[t]){
     const c=units[t][k].filter(cand);
-    if(c.length===1)return{msg:`${unitName(t,k)}에서 고양이가 올 수 있는 칸은 여기 하나뿐이에요.`,unit:units[t][k],target:c};
+    if(c.length===1)return{msg:`${unitName(t,k)}에서 고양이가 올 수 있는 칸은 여기 하나뿐이에요.`,unit:units[t][k],target:c,kind:"cat"};
   }
   // 3) k개 구역(줄)의 고양이가 k개 줄(구역) 안에만 들어갈 수 있음 → 그 줄(구역)의 나머지 칸 제외
   const combos=(arr,k)=>{const out=[];(function go(s,acc){if(acc.length===k){out.push(acc.slice());return}
@@ -442,7 +466,7 @@ function analyze(){
       const an=grp.map(a=>unitName(A,a)).join(', '),bn=[...bs].map(b=>unitName(B,b)).join(', ');
       const msg=k===1?`${an}의 고양이는 ${bn} 안에만 올 수 있어요. 그래서 ${bn}의 깜빡이는 칸에는 고양이가 없어요.`
                      :`${an}의 고양이 ${k}마리는 ${bn} 안에만 들어갈 수 있어요. 그래서 이 ${TYPE_WORD[B]}들의 깜빡이는 칸에는 고양이가 없어요.`;
-      return{msg,unit:[...inA],target:elim};
+      return{msg,unit:[...inA],target:elim,kind:"no"};
     }
   }
   // 4) 여기에 고양이를 놓으면 어떤 줄/구역에 고양이 자리가 사라짐
@@ -451,14 +475,13 @@ function analyze(){
     for(const t of ['reg','row','col'])for(const k of open[t]){
       if(units[t][k].includes(i))continue;
       if(!units[t][k].some(j=>cand(j)&&!gone.has(j)))
-        return{msg:`깜빡이는 칸에 고양이가 있으면 ${unitName(t,k)}에 고양이가 들어갈 자리가 없어져요. 그래서 여기엔 고양이가 없어요.`,unit:units[t][k],target:[i]};
+        return{msg:`깜빡이는 칸에 고양이가 있으면 ${unitName(t,k)}에 고양이가 들어갈 자리가 없어져요. 그래서 여기엔 고양이가 없어요.`,unit:units[t][k],target:[i],kind:"no"};
     }
   }
   return null;
 }
 
-let sayWarn=false;
-function say(t,warn=false){$('msg').textContent=t;$('msg').classList.toggle('warn',warn)}
+function say(t,warn=false){const m=$('msg');m.textContent='';const s=document.createElement('span');s.textContent=t;m.appendChild(s);m.classList.toggle('warn',warn)}
 const fmt=t=>String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
 
 // ================= 화면 =================
@@ -482,6 +505,7 @@ function render(){
   const blk=new Set();
   if($('autoX').checked)S.mark.forEach((m,i)=>{if(m===CAT)blockedBy(i).forEach(j=>blk.add(j))});
   board.classList.toggle('focus',!!focus);
+  if(!(focus&&focus.apply)){const b=$('applyBtn');if(b)b.remove()}
   [...board.children].forEach((d,i)=>{
     const m=S.mark[i];
     const html=m===CAT?'<span class="m cat">🐱</span>':m===NO?'<span class="m no">✕</span>':m===X?'<span class="m x">✕</span>'
@@ -545,7 +569,8 @@ $('ovBtn').onclick=()=>{$('ov').classList.remove('show');newGame(+$('size').valu
 $('retryBtn').onclick=()=>{$('ov').classList.remove('show');reset()};
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT')return;
-  if(e.key.toLowerCase()==='z')undo();
+  const k=e.key.toLowerCase();
+  if(k==='z')undo();else if(k==='a')applyInfo();
 });
 setInterval(()=>{if(S&&!S.done&&!document.hidden){S.time++;$('time').textContent=fmt(S.time);if(S.time%5===0)save()}},1000);
 

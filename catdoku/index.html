@@ -381,16 +381,40 @@ function staysConnected(n,reg,i){
       if(b>=0&&b!==i&&reg[b]===g&&!seen.has(b)){seen.add(b);st.push(b)}}
   return seen.size===cells.length;
 }
+// 정보 힌트 추론만 반복 적용해서 끝까지 풀리는지 확인 (given: 처음 알려 줄 고양이 칸, 없으면 -1)
+function logicSolvable(n,reg,sol,given){
+  const keep=S;
+  S={n,reg,sol,mark:Array(n*n).fill(EMPTY)};
+  if(given>=0)S.mark[given]=CAT;
+  let ok=false;
+  try{
+    for(let it=0;it<n*n*2;it++){
+      if(S.sol.every((c,r)=>S.mark[r*n+c]===CAT)){ok=true;break}
+      const f=analyze(true);if(!f)break;
+      if(f.kind==='cat')S.mark[f.target[0]]=CAT;else for(const i of f.target)S.mark[i]=NO;
+    }
+  }finally{S=keep}
+  return ok;
+}
 function generate(n){
   for(;;){
     const sol=randomSolution(n),reg=growRegions(n,sol);
     const isSol=new Set(sol.map((c,r)=>r*n+c));
     for(let step=0;step<400;step++){
       const alt=findOther(n,reg,sol);
-      if(!alt)return {sol,reg,given:-1};
-      // 정보가 부족하면: 고양이 한 마리를 처음에 알려 주면 답이 하나로 정해지는지 확인
-      if(step>=120)for(const r of shuffle([...Array(n).keys()]))
-        if(!findOther(n,reg,sol,r))return {sol,reg,given:r*n+sol[r]};
+      if(!alt){
+        // 답이 하나여도 추론만으로 끝까지 풀려야 통과. 안 되면 고양이 하나를 알려 줘서 풀리는지 확인
+        if(logicSolvable(n,reg,sol,-1))return {sol,reg,given:-1};
+        for(const r of shuffle([...Array(n).keys()]))
+          if(logicSolvable(n,reg,sol,r*n+sol[r]))return {sol,reg,given:r*n+sol[r]};
+        break; // 새 판으로
+      }
+      // 정보가 부족하면: 고양이 한 마리를 처음에 알려 주면 추론으로 풀리는지 확인
+      if(step>=120){
+        for(const r of shuffle([...Array(n).keys()]))
+          if(!findOther(n,reg,sol,r)&&logicSolvable(n,reg,sol,r*n+sol[r]))return {sol,reg,given:r*n+sol[r]};
+        break;
+      }
       // 아니면 다른 답의 칸 하나를 옆 구역으로 넘겨 그 답을 막음
       const moves=[];
       alt.forEach((c,r)=>{const i=r*n+c;if(isSol.has(i))return;
@@ -609,7 +633,7 @@ function applyInfo(){ // 정보 힌트 내용을 판에 반영
 // 지금 아는 것(찾은 고양이, 확정 ✕, 맞게 친 ✕ 메모)으로 추론 한 단계 찾기
 function unitName(t,k){return t==='row'?`위에서 ${k+1}번째 가로줄`:t==='col'?`왼쪽에서 ${k+1}번째 세로줄`:`${COLOR_NAMES[colorOf(k)]} 구역`}
 const TYPE_WORD={row:'가로줄',col:'세로줄',reg:'구역'};
-function analyze(){
+function analyze(sim=false){
   const n=S.n,N=n*n;
   const keyOf={row:i=>i/n|0,col:i=>i%n,reg:i=>S.reg[i]};
   const units={row:[],col:[],reg:[]};
@@ -619,7 +643,7 @@ function analyze(){
   const blk=new Set();cats.forEach(i=>blockedBy(i).forEach(j=>blk.add(j)));
 
   // 1) 찾은 고양이 주변·같은 줄·같은 구역인데 아직 표시 안 한 칸
-  if(!$('autoX').checked)for(const c of cats){
+  if(!sim&&!$('autoX').checked)for(const c of cats){
     const t=blockedBy(c).filter(j=>S.mark[j]===EMPTY);
     if(t.length)return{msg:'이 고양이와 같은 가로줄·세로줄·구역이거나 바로 옆이라, 깜빡이는 칸에는 고양이가 없어요.',unit:[c],target:t,kind:"no"};
   }

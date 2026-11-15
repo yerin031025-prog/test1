@@ -46,7 +46,7 @@ select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
 .lives .gone{opacity:.2;filter:grayscale(1)}
 .msg{min-height:2.9em;font-size:14px;line-height:1.45;color:var(--ink);background:var(--btn);border-radius:10px;
   padding:8px 12px;display:flex;align-items:center}
-.msg:empty::before{content:"좌클릭으로 ✕ 메모, 우클릭으로 고양이를 찾아요.";color:var(--muted)}
+.msg:empty::before{content:"좌클릭으로 ✕ 메모, 우클릭이나 더블클릭으로 고양이를 찾아요.";color:var(--muted)}
 .msg.warn{color:var(--bad);font-weight:600}
 .board{display:grid;aspect-ratio:1;max-width:100%;border:3px solid var(--wall);border-radius:8px;overflow:hidden;
   user-select:none;touch-action:none;background:var(--wall)}
@@ -57,19 +57,45 @@ select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
 .cell .x{color:var(--ink);opacity:.4;font-weight:700}
 .cell .no{color:var(--ink);opacity:.8;font-weight:900}
 .cell .dot{width:18%;aspect-ratio:1;border-radius:50%;background:var(--ink);opacity:.25}
-.cell .cat{animation:pop .25s}
 .cell .ghost{opacity:.45}
 .cell.start::before{content:"처음";position:absolute;top:2px;left:3px;font-size:9px;font-weight:700;color:var(--ink);opacity:.6;z-index:2}
-.cell.wrong{animation:shake .4s}
-.cell.wrong .no{color:var(--bad);opacity:1}
-@keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.25)}}
-@keyframes shake{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+/* 찾았을 때: 고양이가 튀어나오며 반짝 */
+.cell.found .cat{animation:catIn .7s cubic-bezier(.3,1.6,.5,1)}
+.cell.found{animation:glow .8s ease-out}
+@keyframes catIn{0%{transform:scale(0) rotate(-40deg)}45%{transform:scale(1.5) rotate(12deg)}70%{transform:scale(.9) rotate(-4deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes glow{0%,100%{filter:none}25%{filter:brightness(1.35) saturate(1.3)}}
+/* 틀렸을 때: 칸 흔들림 + 빨간 번쩍 + ✕ 도장 */
+.cell.wrong{animation:shake .45s}
+.cell.wrong .no{color:var(--bad);opacity:1;animation:stamp .4s cubic-bezier(.2,1.4,.5,1)}
+@keyframes shake{15%,55%{transform:translateX(-6px) rotate(-3deg)}35%,75%{transform:translateX(6px) rotate(3deg)}}
+@keyframes stamp{0%{transform:scale(3);opacity:0}60%{transform:scale(.85);opacity:1}100%{transform:scale(1)}}
+.board.hit{animation:hit .35s}
+@keyframes hit{25%{transform:translate(-3px,2px)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,-1px)}}
+.board.dead .cell{filter:grayscale(.7) brightness(.85);transition:filter .8s}
+.cell.dance .cat{animation:dance .6s ease-in-out}
+@keyframes dance{30%{transform:translateY(-35%) scale(1.25) rotate(-10deg)}60%{transform:translateY(0) scale(.95) rotate(8deg)}}
+/* 효과 레이어 */
+.boardwrap{position:relative}
+.fx{position:absolute;inset:0;pointer-events:none;z-index:5}
+.fx .p{position:absolute;transform:translate(-50%,-50%);animation:fly var(--t,.9s) ease-out forwards}
+@keyframes fly{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.1) rotate(var(--rot,0deg));opacity:0}}
+.fx .ring{position:absolute;border:3px solid var(--ring,var(--accent));border-radius:50%;transform:translate(-50%,-50%);animation:ring .6s ease-out forwards}
+@keyframes ring{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}100%{transform:translate(-50%,-50%) scale(2.4);opacity:0}}
+.fx .flash{position:absolute;background:var(--bad);animation:flash .5s ease-out forwards}
+@keyframes flash{0%{opacity:.75}100%{opacity:0}}
+.fx .txt{position:absolute;transform:translate(-50%,-50%);font-weight:800;color:var(--bad);font-size:18px;white-space:nowrap;
+  text-shadow:0 1px 0 var(--bg);animation:rise 1s ease-out forwards}
+@keyframes rise{0%{transform:translate(-50%,-50%);opacity:0}15%{opacity:1}100%{transform:translate(-50%,-180%);opacity:0}}
+.lives span{display:inline-block}
+.lives .breaking{animation:heartBreak .8s ease-in forwards}
+@keyframes heartBreak{0%{transform:scale(1);filter:none;opacity:1}30%{transform:scale(1.6)}55%{transform:scale(1.2) rotate(-20deg)}100%{transform:scale(1) rotate(0);filter:grayscale(1);opacity:.2}}
 .board.focus .cell:not(.hu):not(.ht){filter:saturate(.35) brightness(.88)}
 .cell.hu::after{content:"";position:absolute;inset:0;background:var(--hl);z-index:1}
 .cell.ht{box-shadow:inset 0 0 0 3px var(--accent)}
 .cell.ht::after{content:"";position:absolute;inset:0;background:var(--hl);z-index:1;animation:blink 1s infinite}
 @keyframes blink{50%{opacity:0}}
-@media (prefers-reduced-motion:reduce){.cell .cat,.cell.wrong,.cell.ht::after{animation:none}}
+@media (prefers-reduced-motion:reduce){.cell .cat,.cell.wrong,.cell.wrong .no,.cell.found,.board.hit,.cell.ht::after,.lives .breaking{animation:none!important}.fx{display:none}}
 .bar{display:grid;gap:8px}
 .tools{grid-template-columns:repeat(3,1fr)}
 .hints{grid-template-columns:repeat(3,1fr)}
@@ -82,10 +108,15 @@ select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
 .opts{font-size:14px}
 .help{font-size:13px;color:var(--muted);line-height:1.7}
 .help b{color:var(--ink)}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
 .overlay.show{display:flex}
 .modal{background:var(--panel);border-radius:16px;padding:24px;text-align:center;max-width:340px;width:100%}
 .modal .big{font-size:56px}
+.overlay.show{animation:fadeIn .3s}
+.overlay.show .modal{animation:modalIn .5s cubic-bezier(.3,1.5,.5,1)}
+.overlay.show .big{animation:catIn .8s .15s cubic-bezier(.3,1.6,.5,1) backwards}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes modalIn{from{transform:translateY(30px) scale(.85);opacity:0}}
 .modal h2{margin:8px 0}
 .modal .row{justify-content:center;margin-top:14px}
 </style>
@@ -108,7 +139,7 @@ select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
     <span>⏱ <b id="time">00:00</b></span>
   </div>
   <div class="msg" id="msg" aria-live="polite"></div>
-  <div class="board" id="board" role="grid" aria-label="퍼즐 판"></div>
+  <div class="boardwrap"><div class="board" id="board" role="grid" aria-label="퍼즐 판"></div><div class="fx" id="fx"></div></div>
   <div class="label">힌트</div>
   <div class="bar hints">
     <button id="hCat">🐱 고양이 위치<small>사용 <span id="uCat">0</span>번</small></button>
@@ -125,7 +156,7 @@ select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
   </div>
   <div class="help">
     <b>규칙</b> · N×N 판에 고양이 N마리가 숨어 있어요. ① 색깔 구역마다 1마리 ② 가로줄·세로줄마다 1마리 ③ 고양이끼리는 대각선 포함 주변 8칸에 붙어 있지 않아요.<br>
-    <b>조작</b> · <b>좌클릭</b> ✕ 메모 켜기/끄기 (드래그로 여러 칸) · <b>우클릭</b> 고양이 찾기. 틀리면 생명 ❤️ 하나가 줄고, 3개를 다 잃으면 끝나요.
+    <b>조작</b> · <b>좌클릭</b> ✕ 메모 켜기/끄기 (드래그로 여러 칸) · <b>우클릭 또는 더블클릭</b> 고양이 찾기. 틀리면 생명 ❤️ 하나가 줄고, 3개를 다 잃으면 끝나요.
   </div>
 </div>
 <div class="overlay" id="ov"><div class="modal">
@@ -143,7 +174,7 @@ const $=id=>document.getElementById(id);
 const EMPTY=0,X=1,CAT=2,NO=3; // X: 내 메모(틀릴 수 있음), NO: 확정된 "고양이 없음"
 const LIVES=3;
 const COLOR_NAMES=['빨간','노란','연두','하늘색','보라','분홍','민트','베이지','회색','주황'];
-let S,drag=null,focus=null,flashCell=-1,findMode=false;
+let S,drag=null,focus=null,flashCell=-1,foundCell=-1,lostHeart=-1,findMode=false,lastClick=null;
 
 // ================= 퍼즐 생성 =================
 const rnd=n=>Math.random()*n|0;
@@ -240,7 +271,7 @@ function reset(){ // 같은 판 처음부터
   const n=S.n;
   S.mark=Array(n*n).fill(EMPTY);if(S.given>=0)S.mark[S.given]=CAT;
   S.hist=[];S.lives=LIVES;S.use={cat:0,no:0,info:0};S.time=0;S.done=false;S.lost=false;
-  focus=null;build();save();render();
+  focus=null;lastClick=null;board.classList.remove('dead');build();save();render();
   say(S.given>=0?'이 판은 정보가 부족해서 고양이 한 마리를 먼저 알려 줬어요. ("처음" 표시)':'');
 }
 function save(){try{localStorage.setItem('nyang3',JSON.stringify(S))}catch(e){}}
@@ -269,12 +300,16 @@ function undo(){
     if(h.length){for(const [i,v] of h)S.mark[i]=v;focus=null;save();render();return}
   }
 }
-function guess(i){ // 우클릭: 고양이 찾기
+function guess(i){ // 우클릭·더블클릭: 고양이 찾기
   if(S.done)return;const m=S.mark[i];if(m===CAT||m===NO)return;
   focus=null;
-  if(isCatCell(i)){S.mark[i]=CAT;say('찾았어요! 🐱');checkWin()}
-  else{
-    S.mark[i]=NO;S.lives--;flashCell=i;
+  if(isCatCell(i)){
+    S.mark[i]=CAT;foundCell=i;
+    say(['찾았어요! 🐱','냐옹~ 여기 있었네요!','정답! 🐾','고양이 발견!'][rnd(4)]);
+    fxFound(i);checkWin();
+  }else{
+    S.mark[i]=NO;S.lives--;flashCell=i;lostHeart=S.lives;
+    fxWrong(i);
     if(S.lives>0)say(`여기엔 고양이가 없어요. 생명이 하나 줄었어요. (남은 생명 ${S.lives})`,true);
     else lose();
   }
@@ -287,13 +322,57 @@ function checkWin(){
   $('ovIcon').textContent='😻';$('ovTitle').textContent='고양이를 다 찾았어요!';
   $('ovText').textContent=`${S.n}×${S.n} · ${fmt(S.time)} · 남은 생명 ${'❤️'.repeat(S.lives)}`+
     (hints?` · 힌트 ${hints}번`:' · 힌트 없이 성공!');
-  setTimeout(()=>$('ov').classList.add('show'),400);
+  // 고양이들이 줄 순서대로 폴짝 뛰고 축하 파티클
+  S.sol.forEach((c,r)=>setTimeout(()=>{
+    const d=board.children[r*S.n+c];if(!d)return;
+    d.classList.remove('dance');void d.offsetWidth;d.classList.add('dance');
+    burst(r*S.n+c,['🎉','💖','🐾','✨'],6,70);
+  },500+r*110));
+  setTimeout(()=>$('ov').classList.add('show'),900+S.n*110);
 }
 function lose(){
   S.done=true;S.lost=true;save();
+  board.classList.add('dead');
   $('ovIcon').textContent='😿';$('ovTitle').textContent='생명을 다 썼어요';
   $('ovText').textContent='숨은 고양이 위치를 판에 흐리게 보여 줄게요.';
-  setTimeout(()=>$('ov').classList.add('show'),500);
+  setTimeout(()=>$('ov').classList.add('show'),1100);
+}
+
+// ================= 효과 =================
+const fx=$('fx');
+const reduce=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function cellCenter(i){
+  const d=board.children[i],a=d.getBoundingClientRect(),b=fx.getBoundingClientRect();
+  return{x:a.left-b.left+a.width/2,y:a.top-b.top+a.height/2,w:a.width,h:a.height,l:a.left-b.left,t:a.top-b.top};
+}
+function addFx(el,ms){fx.appendChild(el);setTimeout(()=>el.remove(),ms)}
+function burst(i,emojis,count,dist){
+  if(reduce())return;const c=cellCenter(i);
+  for(let k=0;k<count;k++){
+    const p=document.createElement('span');p.className='p';
+    const ang=Math.PI*2*k/count+Math.random()*.6,r=dist*(.6+Math.random()*.6);
+    p.textContent=emojis[rnd(emojis.length)];
+    p.style.cssText=`left:${c.x}px;top:${c.y}px;font-size:${Math.max(12,c.w*.38)}px;--dx:${Math.cos(ang)*r}px;--dy:${Math.sin(ang)*r}px;--rot:${rnd(80)-40}deg;--t:${.7+Math.random()*.4}s`;
+    addFx(p,1200);
+  }
+}
+function ring(i,color){
+  if(reduce())return;const c=cellCenter(i),e=document.createElement('div');e.className='ring';
+  e.style.cssText=`left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.w}px;${color?`--ring:${color}`:''}`;
+  addFx(e,700);
+}
+function fxFound(i){
+  ring(i,'#ffc94a');setTimeout(()=>ring(i),120);
+  burst(i,['💛','🐾','✨','💕'],8,Math.max(40,cellCenter(i).w*1.2));
+}
+function fxWrong(i){
+  if(reduce())return;const c=cellCenter(i);
+  const f=document.createElement('div');f.className='flash';
+  f.style.cssText=`left:${c.l}px;top:${c.t}px;width:${c.w}px;height:${c.h}px`;addFx(f,600);
+  const t=document.createElement('div');t.className='txt';t.textContent='-1 ❤️';
+  t.style.cssText=`left:${c.x}px;top:${c.y-c.h*.3}px`;addFx(t,1100);
+  burst(i,['😾','💢'],3,Math.max(30,c.w*.8));
+  board.classList.remove('hit');void board.offsetWidth;board.classList.add('hit');
 }
 
 // ================= 힌트 =================
@@ -301,8 +380,8 @@ function hintCat(){
   if(S.done)return;const n=S.n;
   const rows=[];for(let r=0;r<n;r++)if(S.mark[r*n+S.sol[r]]!==CAT)rows.push(r);if(!rows.length)return;
   const r=rows[rnd(rows.length)],i=r*n+S.sol[r];
-  S.use.cat++;S.mark[i]=CAT;focus={unit:new Set(),target:new Set([i])};
-  say('여기에 고양이가 있어요.');checkWin();save();render();
+  S.use.cat++;S.mark[i]=CAT;foundCell=i;focus={unit:new Set(),target:new Set([i])};
+  say('여기에 고양이가 있어요.');fxFound(i);checkWin();save();render();
 }
 function hintNo(){
   if(S.done)return;const n=S.n;
@@ -410,11 +489,13 @@ function render(){
     if(d.innerHTML!==html)d.innerHTML=html;
     d.classList.toggle('hu',!!focus&&focus.unit.has(i));
     d.classList.toggle('ht',!!focus&&focus.target.has(i));
-    d.classList.toggle('wrong',i===flashCell);
+    if(i===flashCell||i===foundCell){const c=i===flashCell?'wrong':'found';d.classList.remove(c);void d.offsetWidth;d.classList.add(c);
+      setTimeout(()=>d.classList.remove(c),900)}
     d.setAttribute('aria-label',m===CAT?'고양이':m===NO?'고양이 없음':m===X?'메모 엑스':'빈칸');
   });
-  if(flashCell>=0){const k=flashCell;flashCell=-1;setTimeout(()=>board.children[k]&&board.children[k].classList.remove('wrong'),450)}
-  $('lives').innerHTML=[...Array(LIVES)].map((_,k)=>`<span class="${k<S.lives?'':'gone'}">❤️</span>`).join('');
+  flashCell=foundCell=-1;
+  $('lives').innerHTML=[...Array(LIVES)].map((_,k)=>`<span class="${k===lostHeart?'breaking':k<S.lives?'':'gone'}">❤️</span>`).join('');
+  lostHeart=-1;
   $('found').textContent=S.mark.filter(m=>m===CAT).length;
   $('time').textContent=fmt(S.time);
   $('uCat').textContent=S.use.cat;$('uNo').textContent=S.use.no;$('uInfo').textContent=S.use.info;
@@ -426,8 +507,13 @@ const cellAt=e=>{const el=document.elementFromPoint(e.clientX,e.clientY);return 
 board.addEventListener('contextmenu',e=>e.preventDefault());
 board.addEventListener('pointerdown',e=>{
   if(S.done)return;const d=cellAt(e);if(!d)return;const i=+d.dataset.i;
-  if(e.button===2||(e.button===0&&findMode)){guess(i);return}
+  if(e.button===2||(e.button===0&&findMode)){lastClick=null;guess(i);return}
   if(e.button!==0)return;
+  // 더블클릭: 첫 클릭으로 바뀐 ✕를 되돌리고 고양이 찾기
+  if(lastClick&&lastClick.i===i&&performance.now()-lastClick.t<350){
+    if(S.mark[i]===lastClick.after){S.mark[i]=lastClick.before;S.hist.pop()}
+    lastClick=null;guess(i);return;
+  }
   const m=S.mark[i];if(m===CAT||m===NO)return;
   board.setPointerCapture(e.pointerId);
   drag={start:i,moved:false,val:m===EMPTY?X:EMPTY,cells:new Set([i])};
@@ -439,7 +525,12 @@ board.addEventListener('pointermove',e=>{
   for(const j of drag.cells)if(S.mark[j]===EMPTY||S.mark[j]===X)
     board.children[j].innerHTML=drag.val===X?'<span class="m x">✕</span>':'';
 });
-board.addEventListener('pointerup',()=>{if(!drag)return;const g=drag;drag=null;setX([...g.cells].map(j=>[j,g.val]))});
+board.addEventListener('pointerup',()=>{
+  if(!drag)return;const g=drag;drag=null;
+  const before=S.mark[g.start];
+  setX([...g.cells].map(j=>[j,g.val]));
+  lastClick=g.moved?null:{i:g.start,t:performance.now(),before,after:S.mark[g.start]};
+});
 board.addEventListener('pointercancel',()=>{drag=null;render()});
 
 $('newBtn').onclick=()=>newGame(+$('size').value);

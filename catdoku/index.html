@@ -5,73 +5,71 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>냥도쿠</title>
 <style>
+/* 한 화면 퍼즐: 상단 바 · 정사각 보드 · 도구 줄 */
 :root{
-  --bg:#fff7ef; --panel:#ffffff; --ink:#3b2f2a; --muted:#9a8a80;
-  --line:#e6d6c8; --thick:#7a5c4a; --given:#3b2f2a; --user:#d2691e;
-  --sel:#ffd9a8; --peer:#fff0de; --same:#ffe6c4; --err:#ffd0d0; --errink:#c0392b;
-  --btn:#f6e7d8; --btnh:#efd6bf; --accent:#e07b39;
+  --bg:#f7f3ee; --panel:#ffffff; --ink:#2e2724; --muted:#8c7d74; --grid:rgba(60,40,30,.18);
+  --wall:#3a2c25; --btn:#ece3da; --btnh:#e2d5c8; --accent:#d9692b; --bad:#d63a2f;
+  --r0:#f6b6b0; --r1:#f9d38c; --r2:#bfe3a5; --r3:#a9d8ef; --r4:#cdb9f2;
+  --r5:#f7c3e0; --r6:#a8e3d4; --r7:#e6d7b4; --r8:#c9cfd9; --r9:#f2a98a;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#1f1a17; --panel:#2a2320; --ink:#f3e9e1; --muted:#a8968a;
-    --line:#4a3d36; --thick:#c9a58c; --given:#f3e9e1; --user:#ffab6b;
-    --sel:#6b4a2e; --peer:#352b26; --same:#4d3a2b; --err:#5a2a2a; --errink:#ff8a80;
-    --btn:#3a2f2a; --btnh:#4a3c35; --accent:#ff9a55;
+    --bg:#1d1916; --panel:#28221e; --ink:#f2e8df; --muted:#a3948a; --grid:rgba(0,0,0,.35);
+    --wall:#0e0b09; --btn:#372e29; --btnh:#463a33; --accent:#ff9150; --bad:#ff6b5e;
+    --r0:#a35f59; --r1:#a6864a; --r2:#6a8c55; --r3:#4f7f99; --r4:#7a66a3;
+    --r5:#9e6688; --r6:#4f8c7c; --r7:#8f8263; --r8:#6c7380; --r9:#a5644a;
+    color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#1f1a17; --panel:#2a2320; --ink:#f3e9e1; --muted:#a8968a;
-  --line:#4a3d36; --thick:#c9a58c; --given:#f3e9e1; --user:#ffab6b;
-  --sel:#6b4a2e; --peer:#352b26; --same:#4d3a2b; --err:#5a2a2a; --errink:#ff8a80;
-  --btn:#3a2f2a; --btnh:#4a3c35; --accent:#ff9a55;
+  --bg:#1d1916; --panel:#28221e; --ink:#f2e8df; --muted:#a3948a; --grid:rgba(0,0,0,.35);
+  --wall:#0e0b09; --btn:#372e29; --btnh:#463a33; --accent:#ff9150; --bad:#ff6b5e;
+  --r0:#a35f59; --r1:#a6864a; --r2:#6a8c55; --r3:#4f7f99; --r4:#7a66a3;
+  --r5:#9e6688; --r6:#4f8c7c; --r7:#8f8263; --r8:#6c7380; --r9:#a5644a;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-  display:flex;justify-content:center;padding:16px;min-height:100vh}
-.wrap{width:100%;max-width:520px}
-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  display:flex;justify-content:center;padding:16px}
+.wrap{width:100%;max-width:540px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 h1{font-size:26px;margin:0}
-.stats{display:flex;gap:14px;font-size:14px;color:var(--muted);margin-bottom:10px;justify-content:space-between;flex-wrap:wrap}
-.stats b{color:var(--ink)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 select,button{font:inherit;color:var(--ink)}
 select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
-.board{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(9,minmax(0,1fr));aspect-ratio:1;background:var(--panel);
-  border:3px solid var(--thick);border-radius:10px;overflow:hidden;user-select:none}
-.cell{position:relative;display:flex;align-items:center;justify-content:center;
-  border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer;
-  font-size:clamp(18px,6vw,32px);line-height:1}
-.cell:nth-child(9n){border-right:none}
-.cell.c2,.cell.c5{border-right:2px solid var(--thick)}
-.cell.r2,.cell.r5{border-bottom:2px solid var(--thick)}
-.cell.r8{border-bottom:none}
-.cell.peer{background:var(--peer)}
-.cell.same{background:var(--same)}
-.cell.sel{background:var(--sel)}
-.cell.err{background:var(--err)}
-.cell.given{color:var(--given);font-weight:700}
-.cell.user{color:var(--user)}
-.cell.err .v{color:var(--errink)}
-.cell.pop .v{animation:pop .25s}
-@keyframes pop{50%{transform:scale(1.3)}}
-.notes{position:absolute;inset:2px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
-  font-size:clamp(7px,2.1vw,12px);color:var(--muted)}
-.notes span{display:flex;align-items:center;justify-content:center}
-.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
-.tools button,.pad button{background:var(--btn);border:none;border-radius:10px;padding:10px 4px;cursor:pointer}
-.tools button:hover,.pad button:hover{background:var(--btnh)}
-.tools button.on{background:var(--accent);color:#fff}
-.tools small{display:block;font-size:11px;color:inherit;opacity:.75}
-.pad{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
-.pad button{font-size:clamp(18px,5.5vw,28px);padding:8px 0;position:relative}
-.pad button .n{display:block;font-size:11px;color:var(--muted)}
-.pad button.done{opacity:.3}
-.row{display:flex;gap:8px;align-items:center}
-.help{font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6}
+.primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer}
+.stats{display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}
+.stats b{color:var(--ink);font-variant-numeric:tabular-nums}
+.msg{min-height:1.3em;margin-top:-6px;font-size:14px;text-align:center;color:var(--accent);font-weight:600}
+.board{display:grid;aspect-ratio:1;max-width:100%;border:3px solid var(--wall);border-radius:8px;overflow:hidden;
+  user-select:none;touch-action:none;background:var(--wall)}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:inset 0 0 0 .5px var(--grid);line-height:1}
+.cell.bt{border-top:2.5px solid var(--wall)} .cell.bl{border-left:2.5px solid var(--wall)}
+.cell .m{pointer-events:none}
+.cell .x{color:var(--ink);opacity:.45;font-weight:700}
+.cell .dot{width:18%;aspect-ratio:1;border-radius:50%;background:var(--ink);opacity:.25}
+.cell.bad::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent 0 5px,color-mix(in srgb,var(--bad) 35%,transparent) 5px 8px);pointer-events:none}
+.cell.bad .cat{filter:drop-shadow(0 0 3px var(--bad))}
+.cell.hint{animation:hint 1s 2}
+@keyframes hint{50%{filter:brightness(1.35)}}
+.cell .cat{animation:pop .2s}
+@keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.2)}}
+@media (prefers-reduced-motion:reduce){.cell .cat,.cell.hint{animation:none}}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tools button{background:var(--btn);border:none;border-radius:10px;padding:10px 4px;cursor:pointer}
+.tools button:hover{background:var(--btnh)}
+.tools button:focus-visible,.primary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tools small{display:block;font-size:11px;opacity:.75;margin-top:2px}
+.opts{font-size:14px;display:flex;gap:16px;flex-wrap:wrap}
+.help{font-size:13px;color:var(--muted);line-height:1.7}
+.help b{color:var(--ink)}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
 .overlay.show{display:flex}
 .modal{background:var(--panel);border-radius:16px;padding:24px;text-align:center;max-width:340px;width:100%}
 .modal .big{font-size:56px}
-.modal button{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 18px;margin-top:12px;cursor:pointer;font-size:16px}
+.modal h2{margin:8px 0}
 </style>
 </head>
 <body>
@@ -79,203 +77,284 @@ select{background:var(--btn);border:none;border-radius:8px;padding:6px 8px}
   <header>
     <h1>🐾 냥도쿠</h1>
     <div class="row">
-      <select id="diff" aria-label="난이도">
-        <option value="easy">쉬움</option>
-        <option value="medium" selected>보통</option>
-        <option value="hard">어려움</option>
-        <option value="expert">전문가</option>
+      <select id="size" aria-label="판 크기">
+        <option value="5">5×5</option><option value="6">6×6</option><option value="7" selected>7×7</option>
+        <option value="8">8×8</option><option value="9">9×9</option><option value="10">10×10</option>
       </select>
-      <button id="newBtn" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer">새 게임</button>
+      <button class="primary" id="newBtn">새 게임</button>
     </div>
   </header>
   <div class="stats">
     <span>⏱ <b id="time">00:00</b></span>
-    <span>실수 <b id="mist">0</b>/3</span>
-    <span>힌트 <b id="hintsLeft">3</b></span>
+    <span>찾은 고양이 <b id="found">0</b>/<b id="total">7</b></span>
+    <span>힌트 <b id="hintCount">0</b>번 사용</span>
   </div>
-  <div class="board" id="board"></div>
+  <div class="msg" id="msg" aria-live="polite"></div>
+  <div class="board" id="board" role="grid" aria-label="퍼즐 판"></div>
   <div class="tools">
     <button id="undoBtn">↩️<small>되돌리기 (Z)</small></button>
-    <button id="eraseBtn">🧽<small>지우기 (Del)</small></button>
-    <button id="noteBtn">✏️<small>메모 (N)</small></button>
     <button id="hintBtn">💡<small>힌트 (H)</small></button>
+    <button id="clearBtn">🧹<small>전부 지우기</small></button>
+    <button id="checkBtn">🔍<small>검사</small></button>
   </div>
-  <div class="pad" id="pad"></div>
-  <div class="row" style="margin-top:12px;justify-content:space-between">
-    <label style="font-size:14px"><input type="checkbox" id="numMode"> 숫자로 보기 (M)</label>
+  <div class="opts">
+    <label><input type="checkbox" id="autoX"> 고양이가 못 오는 칸 자동 표시</label>
+    <label><input type="checkbox" id="showErr" checked> 규칙 위반 표시</label>
   </div>
   <div class="help">
-    규칙: 가로줄, 세로줄, 3×3 칸마다 고양이 9마리가 한 번씩만 들어가야 해요.<br>
-    조작: 마우스로 칸 선택 · 방향키 이동 · 1~9 입력 · N 메모 · H 힌트 · Z 되돌리기 · 실수 3번이면 게임 오버.
+    <b>규칙</b> · N×N 판에 고양이가 <b>N마리</b> 숨어 있어요. ① 색깔 구역마다 1마리 ② 가로줄·세로줄마다 1마리 ③ 고양이끼리는 대각선 포함 주변 8칸에 붙어 있을 수 없어요.<br>
+    <b>조작</b> · 클릭: 빈칸 → ✕ → 🐱 → 빈칸 · 오른쪽 클릭: 바로 🐱 놓기/빼기 · 드래그: ✕ 여러 칸 표시 · Z 되돌리기 · H 힌트
   </div>
 </div>
 <div class="overlay" id="ov"><div class="modal">
-  <div class="big" id="ovIcon">😻</div>
-  <h2 id="ovTitle">완성!</h2>
+  <div class="big">😻</div>
+  <h2>고양이를 다 찾았어요!</h2>
   <div id="ovText"></div>
-  <button id="ovBtn">새 게임</button>
+  <button class="primary" id="ovBtn" style="margin-top:14px;padding:10px 18px">새 게임</button>
 </div></div>
 
 <script>
-const CATS=['😺','😸','😹','😻','😼','😽','🙀','😿','😾'];
-const CLUES={easy:40,medium:32,hard:27,expert:23};
 const $=id=>document.getElementById(id);
-let S; // state
-let numMode=false;
-try{numMode=localStorage.getItem('nyang-num')==='1'}catch(e){}
-$('numMode').checked=numMode;
+const EMPTY=0,X=1,CAT=2;
+let S,drag=null;
 
-const sym=v=>numMode?String(v):CATS[v-1];
+// ---------- 퍼즐 생성 ----------
+const rnd=n=>Math.random()*n|0;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 
-// ---------- generator ----------
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
-function canPlace(g,i,v){
-  const r=i/9|0,c=i%9,br=r-r%3,bc=c-c%3;
-  for(let k=0;k<9;k++){
-    if(g[r*9+k]===v||g[k*9+c]===v)return false;
-    if(g[(br+(k/3|0))*9+bc+k%3]===v)return false;
-  }
-  return true;
-}
-function fill(g){
-  const i=g.indexOf(0); if(i<0)return true;
-  for(const v of shuffle([1,2,3,4,5,6,7,8,9])){
-    if(canPlace(g,i,v)){g[i]=v;if(fill(g))return true;g[i]=0}
-  }
-  return false;
-}
-function countSol(g,limit=2){
-  let best=-1,bestCnt=10;
-  for(let i=0;i<81;i++)if(!g[i]){
-    let n=0;for(let v=1;v<=9;v++)if(canPlace(g,i,v))n++;
-    if(n<bestCnt){bestCnt=n;best=i;if(n<=1)break}
-  }
-  if(best<0)return 1;
-  let total=0;
-  for(let v=1;v<=9;v++)if(canPlace(g,best,v)){
-    g[best]=v;total+=countSol(g,limit-total);g[best]=0;
-    if(total>=limit)break;
-  }
-  return total;
-}
-function generate(diff){
-  const sol=Array(81).fill(0);fill(sol);
-  const puz=sol.slice();
-  const target=CLUES[diff];let clues=81;
-  for(const i of shuffle([...Array(81).keys()])){
-    if(clues<=target)break;
-    const bak=puz[i];puz[i]=0;
-    if(countSol(puz.slice())!==1)puz[i]=bak;else clues--;
-  }
-  return{sol,puz};
+function randomSolution(n){ // sol[r] = 고양이가 있는 열
+  const sol=[],used=Array(n).fill(false);
+  (function go(r){
+    if(r===n)return true;
+    for(const c of shuffle([...Array(n).keys()])){
+      if(used[c]||(r&&Math.abs(c-sol[r-1])<2))continue;
+      used[c]=true;sol[r]=c;if(go(r+1))return true;used[c]=false;
+    }
+    return false;
+  })(0);
+  return sol;
 }
 
-// ---------- game ----------
-function newGame(diff){
-  const {sol,puz}=generate(diff);
-  S={diff,sol,given:puz.map(v=>v>0),val:puz.slice(),notes:Array.from({length:81},()=>[]),
-     sel:-1,note:false,mist:0,hints:3,time:0,history:[],over:false};
-  save();render();
+function growRegions(n,sol){ // 고양이 칸에서 시작해 이어진 색깔 구역을 키움
+  const reg=Array(n*n).fill(-1),size=Array(n).fill(1);
+  sol.forEach((c,r)=>reg[r*n+c]=r);
+  let left=n*n-n;
+  while(left){
+    const cand=[];
+    for(let i=0;i<n*n;i++)if(reg[i]<0){
+      const r=i/n|0,c=i%n;
+      for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const rr=r+dr,cc=c+dc;if(rr<0||cc<0||rr>=n||cc>=n)continue;
+        const g=reg[rr*n+cc];if(g>=0)cand.push([i,g]);
+      }
+    }
+    let tot=0;const w=cand.map(([,g])=>{const x=1/(size[g]**1.2);tot+=x;return x});
+    let t=Math.random()*tot,k=0;while((t-=w[k])>0&&k<cand.length-1)k++;
+    const [i,g]=cand[k];reg[i]=g;size[g]++;left--;
+  }
+  return reg;
 }
-function save(){try{localStorage.setItem('nyang-state',JSON.stringify(S))}catch(e){}}
-function load(){try{const s=JSON.parse(localStorage.getItem('nyang-state'));if(s&&s.sol&&!s.over){S=s;return true}}catch(e){}return false}
 
-function peers(i){const r=i/9|0,c=i%9,b=(r/3|0)*3+(c/3|0);
-  return j=>{const r2=j/9|0,c2=j%9;return r2===r||c2===c||((r2/3|0)*3+(c2/3|0))===b}}
+function countSolutions(n,reg,limit=2){
+  let count=0;const colUsed=Array(n).fill(false),regUsed=Array(n).fill(false);
+  (function go(r,prev){
+    if(count>=limit)return;
+    if(r===n){count++;return}
+    for(let c=0;c<n;c++){
+      const g=reg[r*n+c];
+      if(colUsed[c]||regUsed[g]||(r&&Math.abs(c-prev)<2))continue;
+      colUsed[c]=regUsed[g]=true;go(r+1,c);colUsed[c]=regUsed[g]=false;
+    }
+  })(0,-9);
+  return count;
+}
 
-function pushHist(i){S.history.push({i,v:S.val[i],n:S.notes[i].slice()});if(S.history.length>200)S.history.shift()}
-
-function input(v){
-  const i=S.sel; if(S.over||i<0||S.given[i])return;
-  if(S.val[i]&&S.val[i]===S.sol[i])return; // already correct
-  pushHist(i);
-  if(S.note){
-    if(S.val[i])return;
-    const n=S.notes[i],k=n.indexOf(v);k<0?n.push(v):n.splice(k,1);
-  }else{
-    S.val[i]=v;S.notes[i]=[];
-    if(v!==S.sol[i]){S.mist++;if(S.mist>=3)end(false)}
-    else{ // clear this value from peer notes
-      const p=peers(i);for(let j=0;j<81;j++)if(p(j)){const k=S.notes[j].indexOf(v);if(k>=0)S.notes[j].splice(k,1)}
-      flash=i;
-      if(S.val.every((x,j)=>x===S.sol[j]))end(true);
+// 정답(sol)과 다른 답을 하나 찾음. 없으면 null
+function findOther(n,reg,sol){
+  const colUsed=Array(n).fill(false),regUsed=Array(n).fill(false),cur=[];let found=null;
+  (function go(r,prev,diff){
+    if(found)return;
+    if(r===n){if(diff)found=cur.slice();return}
+    for(let c=0;c<n;c++){
+      const g=reg[r*n+c];
+      if(colUsed[c]||regUsed[g]||(r&&Math.abs(c-prev)<2))continue;
+      colUsed[c]=regUsed[g]=true;cur[r]=c;go(r+1,c,diff||c!==sol[r]);colUsed[c]=regUsed[g]=false;
+      if(found)return;
+    }
+  })(0,-9,false);
+  return found;
+}
+// 칸 i를 빼도 원래 구역이 이어져 있는지
+function staysConnected(n,reg,i){
+  const g=reg[i],cells=[];for(let j=0;j<n*n;j++)if(j!==i&&reg[j]===g)cells.push(j);
+  if(!cells.length)return false;
+  const seen=new Set([cells[0]]),st=[cells[0]];
+  while(st.length){const a=st.pop(),r=a/n|0,c=a%n;
+    for(const b of [r?a-n:-1,r<n-1?a+n:-1,c?a-1:-1,c<n-1?a+1:-1])
+      if(b>=0&&b!==i&&reg[b]===g&&!seen.has(b)){seen.add(b);st.push(b)}}
+  return seen.size===cells.length;
+}
+function generate(n){ // 다른 답이 있으면 그 답의 칸을 옆 구역으로 넘겨 막음 → 답이 하나뿐인 판
+  for(;;){
+    const sol=randomSolution(n),reg=growRegions(n,sol);
+    const isSol=new Set(sol.map((c,r)=>r*n+c));
+    for(let step=0;step<400;step++){
+      const alt=findOther(n,reg,sol);
+      if(!alt)return {sol,reg};
+      const moves=[];
+      alt.forEach((c,r)=>{const i=r*n+c;if(isSol.has(i))return;
+        for(const j of [r?i-n:-1,r<n-1?i+n:-1,c?i-1:-1,c<n-1?i+1:-1])
+          if(j>=0&&reg[j]!==reg[i])moves.push([i,reg[j]]);});
+      shuffle(moves);
+      const mv=moves.find(([i])=>staysConnected(n,reg,i));
+      if(!mv)break;
+      reg[mv[0]]=mv[1];
     }
   }
-  save();render();
 }
-function erase(){const i=S.sel;if(S.over||i<0||S.given[i])return;if(S.val[i]===S.sol[i])return;
-  pushHist(i);S.val[i]=0;S.notes[i]=[];save();render()}
-function undo(){if(S.over)return;const h=S.history.pop();if(!h)return;S.val[h.i]=h.v;S.notes[h.i]=h.n;S.sel=h.i;save();render()}
+
+// ---------- 게임 상태 ----------
+function newGame(n){
+  const p=generate(n);
+  S={n,sol:p.sol,reg:p.reg,mark:Array(n*n).fill(EMPTY),hist:[],time:0,hints:0,done:false};
+  build();save();render();
+}
+function save(){try{localStorage.setItem('nyang2',JSON.stringify(S))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem('nyang2'));if(s&&s.reg&&!s.done){S=s;return true}}catch(e){}return false}
+
+function setMarks(changes){ // [[칸, 값], ...]
+  const real=changes.filter(([i,v])=>S.mark[i]!==v);if(!real.length){render();return}
+  S.hist.push(real.map(([i])=>[i,S.mark[i]]));if(S.hist.length>300)S.hist.shift();
+  for(const [i,v] of real)S.mark[i]=v;
+  save();render();checkWin();
+}
+function undo(){if(S.done)return;const h=S.hist.pop();if(!h)return;for(const [i,v] of h)S.mark[i]=v;save();render()}
+
+// 규칙 위반 칸
+function conflicts(){
+  const n=S.n,cats=[];S.mark.forEach((m,i)=>{if(m===CAT)cats.push(i)});
+  const bad=new Set(),groups={};
+  for(const i of cats){
+    const r=i/n|0,c=i%n;
+    for(const k of ['r'+r,'c'+c,'g'+S.reg[i]])(groups[k]=groups[k]||[]).push(i);
+    for(const j of cats)if(j!==i&&Math.abs((j/n|0)-r)<=1&&Math.abs(j%n-c)<=1){bad.add(i);bad.add(j)}
+  }
+  for(const k in groups)if(groups[k].length>1){
+    const t=k[0],v=+k.slice(1);
+    for(let i=0;i<n*n;i++)if((t==='r'&&(i/n|0)===v)||(t==='c'&&i%n===v)||(t==='g'&&S.reg[i]===v))bad.add(i);
+  }
+  return bad;
+}
+// 놓인 고양이 때문에 고양이가 올 수 없는 칸
+function blocked(){
+  const n=S.n,b=new Set();
+  S.mark.forEach((m,i)=>{if(m!==CAT)return;const r=i/n|0,c=i%n;
+    for(let j=0;j<n*n;j++){if(j===i)continue;const rr=j/n|0,cc=j%n;
+      if(rr===r||cc===c||S.reg[j]===S.reg[i]||(Math.abs(rr-r)<=1&&Math.abs(cc-c)<=1))b.add(j)}});
+  return b;
+}
+function checkWin(){
+  if(S.done)return;
+  const ok=S.sol.every((c,r)=>S.mark[r*S.n+c]===CAT)&&S.mark.filter(m=>m===CAT).length===S.n;
+  if(ok){S.done=true;save();
+    $('ovText').textContent=`${S.n}×${S.n} · 기록 ${fmt(S.time)}`+(S.hints?` · 힌트 ${S.hints}번`:' · 힌트 없이 성공!');
+    setTimeout(()=>$('ov').classList.add('show'),350)}
+}
 function hint(){
-  if(S.over||S.hints<=0)return;
-  let i=S.sel;
-  if(i<0||S.val[i]===S.sol[i]){const empty=[];for(let j=0;j<81;j++)if(S.val[j]!==S.sol[j])empty.push(j);if(!empty.length)return;i=empty[Math.random()*empty.length|0]}
-  S.hints--;S.sel=i;const keep=S.note;S.note=false;
-  const m=S.mist; input(S.sol[i]); S.mist=m; S.note=keep; save();render();
+  if(S.done)return;
+  const n=S.n;
+  // 1) 잘못 놓은 고양이 빼기  2) 고양이 자리에 친 ✕ 고치기  3) 아직 못 찾은 고양이 하나 알려 주기
+  const wrongCat=S.mark.findIndex((m,i)=>m===CAT&&S.sol[i/n|0]!==i%n);
+  const wrongX=S.mark.findIndex((m,i)=>m===X&&S.sol[i/n|0]===i%n);
+  let i,v,msg;
+  if(wrongCat>=0){i=wrongCat;v=X;msg='여기엔 고양이가 없어요.'}
+  else if(wrongX>=0){i=wrongX;v=CAT;msg='✕를 친 이 칸에 고양이가 있어요.'}
+  else{const rows=[];for(let r=0;r<n;r++)if(S.mark[r*n+S.sol[r]]!==CAT)rows.push(r);if(!rows.length)return;
+    const r=rows[rnd(rows.length)];i=r*n+S.sol[r];v=CAT;msg='고양이 한 마리를 찾아 줬어요.'}
+  S.hints++;hintCell=i;toast(msg);setMarks([[i,v]]);
 }
-function end(win){
-  S.over=true;save();
-  $('ovIcon').textContent=win?'😻':'😿';
-  $('ovTitle').textContent=win?'완성했어요!':'게임 오버';
-  $('ovText').textContent=win?`기록 ${fmt(S.time)} · 실수 ${S.mist}번`:'실수를 3번 했어요. 다시 도전해 볼까요?';
-  $('ov').classList.add('show');
+function check(){
+  const n=S.n;let wrong=0;
+  S.mark.forEach((m,i)=>{const isCat=S.sol[i/n|0]===i%n;if((m===CAT&&!isCat)||(m===X&&isCat))wrong++});
+  toast(wrong?`틀린 표시가 ${wrong}개 있어요.`:'지금까지 표시한 건 모두 맞아요.');
 }
+let toastT;function toast(t){$('msg').textContent=t;clearTimeout(toastT);toastT=setTimeout(()=>$('msg').textContent='',2500)}
 const fmt=t=>String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
 
-// ---------- render ----------
-let flash=-1;
-const board=$('board'),pad=$('pad');
-for(let i=0;i<81;i++){const d=document.createElement('div');d.className='cell';d.onclick=()=>{S.sel=i;render()};board.appendChild(d)}
-for(let v=1;v<=9;v++){const b=document.createElement('button');b.onclick=()=>input(v);pad.appendChild(b)}
-
+// ---------- 화면 ----------
+let hintCell=-1;
+const board=$('board');
+function build(){
+  const n=S.n;board.innerHTML='';
+  board.style.gridTemplateColumns=`repeat(${n},minmax(0,1fr))`;
+  board.style.gridTemplateRows=`repeat(${n},minmax(0,1fr))`;
+  const fs=Math.min(40,Math.max(14,300/n));
+  for(let i=0;i<n*n;i++){
+    const d=document.createElement('div'),r=i/n|0,c=i%n;
+    d.className='cell'+(r&&S.reg[i]!==S.reg[i-n]?' bt':'')+(c&&S.reg[i]!==S.reg[i-1]?' bl':'');
+    d.style.background=`var(--r${S.reg[i]})`;
+    d.style.fontSize=`clamp(12px,${fs/5.4}vw,${fs}px)`;
+    d.dataset.i=i;d.setAttribute('role','gridcell');
+    board.appendChild(d);
+  }
+  $('total').textContent=n;$('size').value=n;
+}
 function render(){
-  const sel=S.sel,p=sel>=0?peers(sel):()=>false,sv=sel>=0?S.val[sel]:0;
-  const counts=Array(10).fill(0);S.val.forEach((v,j)=>{if(v&&v===S.sol[j])counts[v]++});
+  const bad=$('showErr').checked?conflicts():new Set();
+  const blk=$('autoX').checked?blocked():new Set();
   [...board.children].forEach((d,i)=>{
-    const r=i/9|0,c=i%9,v=S.val[i];
-    let cls='cell r'+r+' c'+c;
-    if(S.given[i])cls+=' given';else if(v)cls+=' user';
-    if(v&&v!==S.sol[i])cls+=' err';
-    else if(i===sel)cls+=' sel';
-    else if(sv&&v===sv)cls+=' same';
-    else if(p(i))cls+=' peer';
-    if(i===flash)cls+=' pop';
-    d.className=cls;
-    if(v)d.innerHTML=`<span class="v">${sym(v)}</span>`;
-    else if(S.notes[i].length)d.innerHTML='<div class="notes">'+[1,2,3,4,5,6,7,8,9].map(n=>`<span>${S.notes[i].includes(n)?sym(n):''}</span>`).join('')+'</div>';
-    else d.innerHTML='';
+    const m=S.mark[i];
+    const html=m===CAT?'<span class="m cat">🐱</span>':m===X?'<span class="m x">✕</span>':blk.has(i)?'<span class="m dot"></span>':'';
+    if(d.innerHTML!==html)d.innerHTML=html;
+    d.classList.toggle('bad',bad.has(i));
+    d.classList.toggle('hint',i===hintCell);
+    d.setAttribute('aria-label',m===CAT?'고양이':m===X?'엑스':'빈칸');
   });
-  flash=-1;
-  [...pad.children].forEach((b,k)=>{const v=k+1;b.innerHTML=`${sym(v)}<span class="n">${numMode?'':v}</span>`;b.classList.toggle('done',counts[v]>=9)});
-  $('noteBtn').classList.toggle('on',S.note);
-  $('mist').textContent=S.mist;$('hintsLeft').textContent=S.hints;$('time').textContent=fmt(S.time);
-  $('diff').value=S.diff;
+  hintCell=-1;
+  $('found').textContent=S.mark.filter(m=>m===CAT).length;
+  $('hintCount').textContent=S.hints;$('time').textContent=fmt(S.time);
 }
 
-// ---------- events ----------
-$('newBtn').onclick=()=>newGame($('diff').value);
-$('diff').onchange=()=>newGame($('diff').value);
-$('undoBtn').onclick=undo;$('eraseBtn').onclick=erase;$('hintBtn').onclick=hint;
-$('noteBtn').onclick=()=>{S.note=!S.note;save();render()};
-$('numMode').onchange=e=>{numMode=e.target.checked;try{localStorage.setItem('nyang-num',numMode?'1':'0')}catch(_){}render()};
-$('ovBtn').onclick=()=>{$('ov').classList.remove('show');newGame($('diff').value)};
-document.addEventListener('keydown',e=>{
-  if(e.target.tagName==='SELECT')return;
-  const k=e.key;
-  if(k>='1'&&k<='9'){input(+k);return}
-  const mv={ArrowUp:-9,ArrowDown:9,ArrowLeft:-1,ArrowRight:1}[k];
-  if(mv){e.preventDefault();let i=S.sel<0?40:S.sel;
-    if(mv===-1&&i%9===0)i+=8;else if(mv===1&&i%9===8)i-=8;else i=(i+mv+81)%81;S.sel=i;render();return}
-  if(k==='Backspace'||k==='Delete'||k==='0'){erase();return}
-  const l=k.toLowerCase();
-  if(l==='n'){S.note=!S.note;save();render()}
-  else if(l==='h')hint();
-  else if(l==='z'||(e.ctrlKey&&l==='z'))undo();
-  else if(l==='m'){$('numMode').click()}
+// ---------- 입력: 클릭 순환, 오른쪽 클릭 고양이, 드래그 ✕ ----------
+const cellAt=e=>{const el=document.elementFromPoint(e.clientX,e.clientY);return el&&el.closest?el.closest('.cell'):null};
+board.addEventListener('contextmenu',e=>e.preventDefault());
+board.addEventListener('pointerdown',e=>{
+  if(S.done)return;const d=cellAt(e);if(!d)return;const i=+d.dataset.i;
+  if(e.button===2){setMarks([[i,S.mark[i]===CAT?EMPTY:CAT]]);return}
+  if(e.button!==0)return;
+  board.setPointerCapture(e.pointerId);
+  drag={start:i,moved:false,val:S.mark[i]===EMPTY?X:S.mark[i]===X?EMPTY:null,cells:new Set([i])};
 });
-setInterval(()=>{if(S&&!S.over&&!document.hidden){S.time++;$('time').textContent=fmt(S.time);if(S.time%5===0)save()}},1000);
+board.addEventListener('pointermove',e=>{
+  if(!drag||drag.val===null)return;const d=cellAt(e);if(!d)return;const i=+d.dataset.i;
+  if(drag.cells.has(i))return;
+  drag.moved=true;drag.cells.add(i);
+  for(const j of drag.cells)if(S.mark[j]!==CAT)board.children[j].innerHTML=drag.val===X?'<span class="m x">✕</span>':'';
+});
+board.addEventListener('pointerup',()=>{
+  if(!drag)return;const g=drag;drag=null;
+  if(!g.moved){const m=S.mark[g.start];setMarks([[g.start,m===EMPTY?X:m===X?CAT:EMPTY]]);return}
+  setMarks([...g.cells].filter(j=>S.mark[j]!==CAT).map(j=>[j,g.val]));
+});
+board.addEventListener('pointercancel',()=>{drag=null;render()});
 
-if(load())render();else newGame('medium');
+$('newBtn').onclick=()=>newGame(+$('size').value);
+$('size').onchange=()=>newGame(+$('size').value);
+$('undoBtn').onclick=undo;$('hintBtn').onclick=hint;$('checkBtn').onclick=check;
+$('clearBtn').onclick=()=>{if(!S.done)setMarks(S.mark.map((_,i)=>[i,EMPTY]))};
+for(const id of ['autoX','showErr']){
+  try{const v=localStorage.getItem('nyang-'+id);if(v!==null)$(id).checked=v==='1'}catch(e){}
+  $(id).onchange=e=>{try{localStorage.setItem('nyang-'+id,e.target.checked?'1':'0')}catch(_){}render()};
+}
+$('ovBtn').onclick=()=>{$('ov').classList.remove('show');newGame(+$('size').value)};
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT')return;
+  const k=e.key.toLowerCase();
+  if(k==='z')undo();else if(k==='h')hint();
+});
+setInterval(()=>{if(S&&!S.done&&!document.hidden){S.time++;$('time').textContent=fmt(S.time);if(S.time%5===0)save()}},1000);
+
+if(load()){build();render()}else newGame(7);
 </script>
 </body>
 </html>
